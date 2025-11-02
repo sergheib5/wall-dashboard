@@ -88,7 +88,7 @@ const WEATHER_LOC="Chicago,US";
 // SLIDES
 const slides=document.querySelectorAll(".slide");
 let cur=0;
-setInterval(()=>{slides[cur].classList.remove("active");cur=(cur+1)%slides.length;slides[cur].classList.add("active");},4500);
+setInterval(()=>{slides[cur].classList.remove("active");cur=(cur+1)%slides.length;slides[cur].classList.add("active");},60000);
 
 // CLOCK
 setInterval(()=>{const el=document.getElementById("clock");if(el)el.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});},1000);
