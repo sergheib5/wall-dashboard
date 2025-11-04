@@ -1,0 +1,35 @@
+:root {
+  --bg:#0d1117; --card-bg:#161b22; --card-hover:#1f252e;
+  --accent:#6c63ff; --accent-light:#00bcd4;
+  --text:#c9d1d9; --text-dim:#8b949e; --glow:rgba(108,99,255,0.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;overflow-y:auto}
+.slide.active{opacity:1;z-index:2}
+.container{max-width:1600px;margin:0 auto;padding:2rem;height:100%;display:flex;flex-direction:column;justify-content:center}
+.loading{text-align:center;color:var(--text-dim);font-size:1.3rem;padding:2rem}
+.card{background:var(--card-bg);border-radius:24px;padding:2rem;box-shadow:0 8px 25px rgba(0,0,0,.5)}
+.todo-item{display:flex;align-items:center;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:1.6rem}
+.todo-item:last-child{border-bottom:none}
+.todo-item input[type=checkbox]{accent-color:var(--accent-light);cursor:default;transform:scale(1.5);margin-right:1rem;}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem}
+.market-card{background:var(--card-bg);padding:2rem;border-radius:20px;box-shadow:0 6px 20px rgba(0,0,0,.4);transition:.3s}
+.market-card:hover{background:var(--card-hover);transform:translateY(-6px)}
+.market-name{font-size:1.3rem;font-weight:600;margin-bottom:.5rem}
+.market-price{font-size:2.7rem;font-weight:800;color:var(--accent-light);text-shadow:0 0 20px var(--glow)}
+.weather-container{text-align:center}
+.clock{font-size:3rem;font-weight:800;color:var(--accent-light);text-shadow:0 0 30px var(--glow);margin-bottom:1rem}
+.weather-icon{font-size:5rem;margin:1rem 0}
+.weather-temp{font-size:5rem;font-weight:800;color:var(--accent-light)}
+.weather-desc{font-size:1.5rem;text-transform:capitalize}
+.weather-forecast{display:flex;gap:1rem;justify-content:center;margin-top:2rem;flex-wrap:wrap}
+.forecast-card{background:var(--card-hover);border-radius:16px;padding:1rem 1.5rem;width:150px}
+.forecast-card .date{font-size:.9rem;color:var(--text-dim)}
+.forecast-card .icon{font-size:2rem;margin:.5rem 0}
+.forecast-card .temp{font-size:1.2rem;font-weight:700;color:var(--accent-light)}
+.forecast-card .desc{font-size:.9rem;color:var(--text-dim)}
+.calendar-embed{border:0;width:100%;height:90vh;border-radius:16px}
+.vignette{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(0,0,0,0)60%,rgba(0,0,0,.6)100%);pointer-events:none}
+

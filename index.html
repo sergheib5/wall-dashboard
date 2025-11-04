@@ -7,43 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
 <title>Wall Dashboard</title>
-<style>
-:root {
-  --bg:#0d1117; --card-bg:#161b22; --card-hover:#1f252e;
-  --accent:#6c63ff; --accent-light:#00bcd4;
-  --text:#c9d1d9; --text-dim:#8b949e; --glow:rgba(108,99,255,0.4);
-}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
-  font-family:'Inter',system-ui,sans-serif;overflow:hidden}
-.slide{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;overflow-y:auto}
-.slide.active{opacity:1;z-index:2}
-.container{max-width:1600px;margin:0 auto;padding:2rem;height:100%;display:flex;flex-direction:column;justify-content:center}
-.loading{text-align:center;color:var(--text-dim);font-size:1.3rem;padding:2rem}
-.card{background:var(--card-bg);border-radius:24px;padding:2rem;box-shadow:0 8px 25px rgba(0,0,0,.5)}
-.todo-item{display:flex;align-items:center;padding:1.5rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:1.6rem}
-.todo-item:last-child{border-bottom:none}
-.todo-item input[type=checkbox]{accent-color:var(--accent-light);cursor:default;transform:scale(1.5);margin-right:1rem;}
-.market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem}
-.market-card{background:var(--card-bg);padding:2rem;border-radius:20px;box-shadow:0 6px 20px rgba(0,0,0,.4);transition:.3s}
-.market-card:hover{background:var(--card-hover);transform:translateY(-6px)}
-.market-name{font-size:1.3rem;font-weight:600;margin-bottom:.5rem}
-.market-price{font-size:2.7rem;font-weight:800;color:var(--accent-light);text-shadow:0 0 20px var(--glow)}
-.weather-container{text-align:center}
-.clock{font-size:3rem;font-weight:800;color:var(--accent-light);text-shadow:0 0 30px var(--glow);margin-bottom:1rem}
-.weather-icon{font-size:5rem;margin:1rem 0}
-.weather-temp{font-size:5rem;font-weight:800;color:var(--accent-light)}
-.weather-desc{font-size:1.5rem;text-transform:capitalize}
-.weather-forecast{display:flex;gap:1rem;justify-content:center;margin-top:2rem;flex-wrap:wrap}
-.forecast-card{background:var(--card-hover);border-radius:16px;padding:1rem 1.5rem;width:150px}
-.forecast-card .date{font-size:.9rem;color:var(--text-dim)}
-.forecast-card .icon{font-size:2rem;margin:.5rem 0}
-.forecast-card .temp{font-size:1.2rem;font-weight:700;color:var(--accent-light)}
-.forecast-card .desc{font-size:.9rem;color:var(--text-dim)}
-.calendar-embed{border:0;width:100%;height:90vh;border-radius:16px}
-.vignette{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(0,0,0,0)60%,rgba(0,0,0,.6)100%);pointer-events:none}
-</style>
 </head>
 <body>
 
@@ -58,6 +23,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 <div class="slide" id="calendarSlide">
   <div class="container">
     <iframe class="calendar-embed"
+    style="filter: invert(1) hue-rotate(180deg); border:0;width:100%;height:90vh;border-radius:16px;"
       src="https://calendar.google.com/calendar/embed?src=sergheib5%40gmail.com&ctz=America%2FChicago&mode=WEEK"></iframe>
   </div>
 </div>
@@ -77,184 +43,18 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
   </div>
 </div>
 
+<div class="slide" id="photosSlide">
+  <div class="container" style="justify-content:center;align-items:center;">
+    <img id="photoFrame" style="max-width:90%;border-radius:20px;box-shadow:0 0 30px rgba(0,0,0,0.5)">
+  </div>
+</div>
+
 <div class="vignette"></div>
 
-<script>
-// CONFIG
-const STOCKS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vSgZpS602vubcDBZttiflnjNHTavsQ_l1_epvqL7Vuc39rhciIXdcltL4pnJVSzUnZE8Wc6_2uNHsDL/pub?gid=0&single=true&output=csv";
-const TODO_DOC="https://docs.google.com/document/d/e/2PACX-1vQ3c5d6aalilb8iHsKSVXs6GDRo2UULnQoQWUBiiGZeoym3oDXmCYz-_AKJJ19UIwXex-3Cqv7QjHoE/pub";
-const WEATHER_LOC="Chicago,US";
-
-// SLIDES
-const slides=document.querySelectorAll(".slide");
-let cur=0;
-setInterval(()=>{slides[cur].classList.remove("active");cur=(cur+1)%slides.length;slides[cur].classList.add("active");},60000);
-
-// CLOCK
-setInterval(()=>{const el=document.getElementById("clock");if(el)el.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});},1000);
-
-// PROXY FETCH
-async function fetchRaw(url){
-  const proxies=["https://api.allorigins.win/get?url=","https://corsproxy.io/?"];
-  for(const p of proxies){
-    try{
-      const r=await fetch(p+encodeURIComponent(url));
-      if(!r.ok) continue;
-      const ct=r.headers.get("content-type")||"";
-      if(ct.includes("application/json")){
-        const j=await r.json(); if(j && j.contents) return j.contents;
-      }
-      return await r.text();
-    }catch{}
-  }
-  return null;
-}
-async function fetchJSON(url){
-  for(let i=0;i<2;i++){ // retry twice
-    try{
-      const t=await fetchRaw(url);
-      if(!t) continue;
-      return JSON.parse(t);
-    }catch{}
-  }
-  return null;
-}
-
-// CSV PARSER
-function normalizeHeader(h){return h.replace(/^\uFEFF/,"").replace(/[^\x20-\x7E]/g,"").trim().replace(/^"(.*)"$/,"$1").toLowerCase();}
-function detectDelimiter(line){const c=(line.match(/,/g)||[]).length,s=(line.match(/;/g)||[]).length;return s>c?";":",";}
-function parseCSV(text){
-  let t=text.replace(/^\uFEFF/,"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-  const lines=t.split("\n").filter(l=>l.trim().length>0);
-  if(lines.length===0)return{headers:[],rows:[]};
-  const d=detectDelimiter(lines[0]);
-  const parse=(line)=>{const out=[];let cur="",q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch=='"'){if(q&&line[i+1]=='"'){cur+='"';i++;}else q=!q;}else if(ch===d&&!q){out.push(cur);cur="";}else cur+=ch;}out.push(cur);return out.map(s=>s.replace(/^"(.*)"$/,"$1"));};
-  return{headers:parse(lines[0]).map(normalizeHeader),rows:lines.slice(1).map(parse)};
-}
-
-// TODOS – detect Docs checklists and Unicode marks
-async function loadTodos(){
-  const c=document.getElementById("todosGrid");
-  try{
-    const html=await fetchRaw(TODO_DOC);
-    if(!html){c.innerHTML="<div class='loading'>Unable to load tasks</div>";return;}
-    const doc=new DOMParser().parseFromString(html,"text/html");
-    const rawItems=[...doc.querySelectorAll("li,p")].filter(e=>e.textContent.trim().length>0);
-    if(!rawItems.length){c.innerHTML="<div class='loading'>No tasks</div>";return;}
-
-    const parsed=rawItems.slice(0,20).map(e=>{
-      const htmlContent=e.innerHTML;
-      const text=e.textContent.trim();
-      let checked=false;
-      if(/☑|✓|✔|✅/.test(text)) checked=true;
-      if(/(check(?!box)?[^"'>]*\.(png|svg))/i.test(htmlContent)&&!/blank/i.test(htmlContent)) checked=true;
-      const cleanText=text.replace(/^[☑☐✓✔✅]\s*/,'').trim();
-      return{ text:cleanText, checked };
-    });
-
-    c.innerHTML=parsed.map(t=>`
-      <div class='todo-item'>
-        <input type="checkbox" ${t.checked?"checked":""} disabled>
-        <label style="flex:1;${t.checked?"text-decoration:line-through;color:var(--text-dim);":""}">
-          ${t.text}
-        </label>
-      </div>`).join("");
-  }catch(err){console.error(err);c.innerHTML="<div class='loading'>Error loading tasks</div>";}
-}
-
-// MARKETS
-async function loadMarkets(){
-  const c=document.getElementById("marketsGrid");
-  c.innerHTML="<div class='loading'>Loading...</div>";
-  try{
-    let csv=await fetchRaw(STOCKS_CSV);
-    if(!csv){c.innerHTML="<div class='loading'>No stock data</div>";return;}
-    const base64match=csv.match(/^data:text\/csv;base64,([A-Za-z0-9+/=]+)/);
-    if(base64match){try{csv=atob(base64match[1]);}catch(e){console.warn("decode fail",e);}}
-    const parsed=parseCSV(csv);
-    const h=parsed.headers; const ni=h.indexOf("name"),pi=h.indexOf("price");
-    if(ni===-1||pi===-1){c.innerHTML="<div class='loading'>CSV missing Name/Price</div>";return;}
-    const cards=parsed.rows.map(r=>{
-      const n=(r[ni]||"").trim(),p=(r[pi]||"").trim();
-      if(!n)return"";return`<div class='market-card'><div class='market-name'>${n}</div><div class='market-price'>$${p||"—"}</div></div>`;
-    }).join("");
-    c.innerHTML=cards||"<div class='loading'>No rows</div>";
-  }catch(e){console.error(e);c.innerHTML="<div class='loading'>Error loading stock data</div>";}
-}
-
-// WEATHER – robust current + 3-day forecast
-function getIcon(desc){
-  const d=(desc||"").toLowerCase();
-  if(d.includes("sun")||d.includes("clear"))return"☀️";
-  if(d.includes("cloud"))return"☁️";
-  if(d.includes("rain"))return"🌧️";
-  if(d.includes("storm")||d.includes("thunder"))return"⛈️";
-  if(d.includes("snow"))return"❄️";
-  if(d.includes("fog")||d.includes("mist"))return"🌫️";
-  return"🌤️";
-}
-function ymdLocal(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
-// WEATHER – use Open-Meteo for reliable current + 3-day forecast
-async function loadWeather(){
-  const c=document.getElementById("weatherContainer");
-  try{
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=41.8781&longitude=-87.6298&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=America%2FChicago`;
-    const res=await fetch(url);
-    if(!res.ok){c.innerHTML="<div class='loading'>No weather data</div>";return;}
-    const data=await res.json();
-
-    // current conditions
-    const current=data.current_weather;
-    const todayIndex=0;
-    const days=data.daily.time;
-    const minT=data.daily.temperature_2m_min;
-    const maxT=data.daily.temperature_2m_max;
-    const codes=data.daily.weathercode;
-
-    // map weather codes to emoji
-    function getIcon(code){
-      if([0].includes(code)) return "☀️";
-      if([1,2].includes(code)) return "🌤️";
-      if([3].includes(code)) return "☁️";
-      if([45,48].includes(code)) return "🌫️";
-      if([51,53,55,56,57].includes(code)) return "🌦️";
-      if([61,63,65,80,81,82].includes(code)) return "🌧️";
-      if([66,67,71,73,75,77,85,86].includes(code)) return "❄️";
-      if([95,96,99].includes(code)) return "⛈️";
-      return "🌤️";
-    }
-
-    // build forecast for next 3 days (skip today)
-    let fHTML="";
-    for(let i=1;i<=3 && i<days.length;i++){
-      const date=new Date(days[i]);
-      const label=date.toLocaleDateString("en-US",{weekday:"short"});
-      fHTML+=`
-        <div class='forecast-card'>
-          <div class='date'>${label}</div>
-          <div class='icon'>${getIcon(codes[i])}</div>
-          <div class='temp'>${minT[i]}° / ${maxT[i]}°</div>
-        </div>`;
-    }
-
-    c.innerHTML=`
-      <div class='weather-icon'>${getIcon(current.weathercode)}</div>
-      <div class='weather-temp'>${Math.round(current.temperature)}°C</div>
-      <div class='weather-desc'>${current.windspeed} km/h wind</div>
-      <div style='color:var(--text-dim);margin-top:.5rem'>Chicago</div>
-      <div class='weather-forecast'>${fHTML}</div>`;
-  }catch(err){
-    console.error(err);
-    c.innerHTML="<div class='loading'>Weather unavailable</div>";
-  }
-}
-
-
-// INIT
-loadTodos();loadMarkets();loadWeather();
-setInterval(loadTodos,120000);
-setInterval(loadMarkets,120000);
-setInterval(loadWeather,600000);
-</script>
+<script src="js/todos.js"></script>
+<script src="js/markets.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/photos.js"></script>
+<script src="js/main.js"></script>
 </body>
 </html>
