@@ -14,7 +14,7 @@ setInterval(()=>{
   if(slides[cur].id==="photosSlide"){
     loadPhoto();
   }
-},6000);
+},60000);
 
 // CLOCK
 setInterval(()=>{const el=document.getElementById("clock");if(el)el.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});},1000);
