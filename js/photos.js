@@ -47,13 +47,23 @@ function loadPhoto(){
     return;
   }
   
-  // Show current photo
-  el.src=photos[photoIndex];
-  console.log(`Showing photo ${photoIndex+1}/${photos.length}: ${photos[photoIndex]}`);
+  // Fade out current photo
+  el.style.opacity='0';
   
-  // Advance to next photo for next time photos slide appears
-  // This ensures we don't repeat until all photos shown
-  photoIndex=(photoIndex+1)%photos.length;
+  // After fade out, change image and fade in
+  setTimeout(()=>{
+    el.src=photos[photoIndex];
+    console.log(`Showing photo ${photoIndex+1}/${photos.length}: ${photos[photoIndex]}`);
+    
+    // Wait for image to load, then fade in
+    el.onload=()=>{
+      el.style.opacity='1';
+    };
+    
+    // Advance to next photo for next time photos slide appears
+    // This ensures we don't repeat until all photos shown
+    photoIndex=(photoIndex+1)%photos.length;
+  },250);
 }
 
 // Initialize photos on load

@@ -91,9 +91,9 @@ async function loadWeather(){
     
     c.innerHTML=`
       <div class='weather-icon'>${getWeatherIcon(currentCode)}</div>
-      <div class='weather-temp'>${currentTemp}°C</div>
+      <div class='weather-temp'>${currentTemp}°</div>
       <div class='weather-desc'>${currentWind} km/h wind</div>
-      <div style='color:var(--text-dim);margin-top:.5rem'>Chicago</div>
+      <div class='weather-location'>Chicago</div>
       <div class='weather-forecast'>${fHTML}</div>`;
   }catch(err){
     console.error(err);
