@@ -28,14 +28,22 @@ async function initPhotos(){
   }
 }
 
+let photoLoadTimeout = null;
+
 function loadPhoto(){
   const el=document.getElementById("photoFrame");
   if(!el)return;
   
+  // Clear any pending timeout to prevent pile-up
+  if(photoLoadTimeout){
+    clearTimeout(photoLoadTimeout);
+    photoLoadTimeout=null;
+  }
+  
   // Wait for photos to load
   if(!photosLoaded||photos.length===0){
     console.log('Photos not loaded yet, waiting...');
-    setTimeout(loadPhoto,100);
+    photoLoadTimeout=setTimeout(loadPhoto,100);
     return;
   }
   

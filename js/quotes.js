@@ -2,6 +2,14 @@
 let cachedQuote = null;
 let cacheDate = null;
 
+// HTML sanitization helper
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 function getDayKey() {
   const today = new Date();
   return `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
@@ -23,7 +31,14 @@ async function loadQuote() {
 
   try {
     // Fetch from quotable.io API (free, no API key needed)
-    const response = await fetch("https://api.quotable.io/random?tags=inspirational|motivational|success|wisdom");
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    
+    const response = await fetch("https://api.quotable.io/random?tags=inspirational|motivational|success|wisdom", {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
     if (!response.ok) throw new Error("Failed to fetch quote");
     
     const data = await response.json();
@@ -49,9 +64,12 @@ async function loadQuote() {
 }
 
 function displayQuote(quote, container) {
+  if (!container) return;
+  const text = escapeHtml(quote.text || '');
+  const author = quote.author ? escapeHtml(quote.author) : '';
   container.innerHTML = `
-    <div class="quote-text">${quote.text}</div>
-    ${quote.author ? `<div class="quote-author">– ${quote.author}</div>` : ""}
+    <div class="quote-text">${text}</div>
+    ${author ? `<div class="quote-author">${author}</div>` : ""}
   `;
 }
 

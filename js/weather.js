@@ -1,23 +1,35 @@
-// WEATHER – robust current + 3-day forecast
-function getIcon(desc){
-  const d=(desc||"").toLowerCase();
-  if(d.includes("sun")||d.includes("clear"))return"☀️";
-  if(d.includes("cloud"))return"☁️";
-  if(d.includes("rain"))return"🌧️";
-  if(d.includes("storm")||d.includes("thunder"))return"⛈️";
-  if(d.includes("snow"))return"❄️";
-  if(d.includes("fog")||d.includes("mist"))return"🌫️";
-  return"🌤️";
-}
-function ymdLocal(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 // WEATHER – use Open-Meteo for reliable current + 3-day forecast
+// Map weather codes to emoji (WMO Weather Interpretation Codes)
+function getWeatherIcon(code){
+  if([0].includes(code)) return "☀️";
+  if([1,2].includes(code)) return "🌤️";
+  if([3].includes(code)) return "☁️";
+  if([45,48].includes(code)) return "🌫️";
+  if([51,53,55,56,57].includes(code)) return "🌦️";
+  if([61,63,65,80,81,82].includes(code)) return "🌧️";
+  if([66,67,71,73,75,77,85,86].includes(code)) return "❄️";
+  if([95,96,99].includes(code)) return "⛈️";
+  return "🌤️";
+}
+
 async function loadWeather(){
   const c=document.getElementById("weatherContainer");
+  if(!c)return;
+  
   try{
     const url=`https://api.open-meteo.com/v1/forecast?latitude=41.8781&longitude=-87.6298&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=America%2FChicago`;
     const res=await fetch(url);
-    if(!res.ok){c.innerHTML="<div class='loading'>No weather data</div>";return;}
+    if(!res.ok){
+      c.innerHTML="<div class='loading'>No weather data</div>";
+      return;
+    }
     const data=await res.json();
+
+    // Validate response structure
+    if(!data.current_weather||!data.daily){
+      c.innerHTML="<div class='loading'>Invalid weather data</div>";
+      return;
+    }
 
     // current conditions
     const current=data.current_weather;
@@ -44,46 +56,43 @@ async function loadWeather(){
     // If today not found, start from the first available date
     if(todayIndex===-1)todayIndex=0;
 
-    // map weather codes to emoji
-    function getIcon(code){
-      if([0].includes(code)) return "☀️";
-      if([1,2].includes(code)) return "🌤️";
-      if([3].includes(code)) return "☁️";
-      if([45,48].includes(code)) return "🌫️";
-      if([51,53,55,56,57].includes(code)) return "🌦️";
-      if([61,63,65,80,81,82].includes(code)) return "🌧️";
-      if([66,67,71,73,75,77,85,86].includes(code)) return "❄️";
-      if([95,96,99].includes(code)) return "⛈️";
-      return "🌤️";
-    }
-
     // build forecast: today's min/max and next 3 days
     let fHTML="";
     
     // Today's forecast card - show "Today" instead of day name
+    const todayCode=codes[todayIndex]??0;
+    const todayMin=Math.round(minT[todayIndex]??0);
+    const todayMax=Math.round(maxT[todayIndex]??0);
     fHTML+=`
       <div class='forecast-card'>
         <div class='date'>Today</div>
-        <div class='icon'>${getIcon(codes[todayIndex])}</div>
-        <div class='temp'>${Math.round(minT[todayIndex])}° / ${Math.round(maxT[todayIndex])}°</div>
+        <div class='icon'>${getWeatherIcon(todayCode)}</div>
+        <div class='temp'>${todayMin}° / ${todayMax}°</div>
       </div>`;
     
     // Next 3 days forecast (starting from todayIndex+1)
     for(let i=todayIndex+1;i<=todayIndex+3 && i<days.length;i++){
       const date=new Date(days[i]+"T12:00:00"); // Add time to avoid timezone shifts
       const label=date.toLocaleDateString("en-US",{weekday:"short",timeZone:"America/Chicago"});
+      const code=codes[i]??0;
+      const min=Math.round(minT[i]??0);
+      const max=Math.round(maxT[i]??0);
       fHTML+=`
         <div class='forecast-card'>
           <div class='date'>${label}</div>
-          <div class='icon'>${getIcon(codes[i])}</div>
-          <div class='temp'>${Math.round(minT[i])}° / ${Math.round(maxT[i])}°</div>
+          <div class='icon'>${getWeatherIcon(code)}</div>
+          <div class='temp'>${min}° / ${max}°</div>
         </div>`;
     }
 
+    const currentCode=current.weathercode??0;
+    const currentTemp=Math.round(current.temperature??0);
+    const currentWind=Math.round(current.windspeed??0);
+    
     c.innerHTML=`
-      <div class='weather-icon'>${getIcon(current.weathercode)}</div>
-      <div class='weather-temp'>${Math.round(current.temperature)}°C</div>
-      <div class='weather-desc'>${current.windspeed} km/h wind</div>
+      <div class='weather-icon'>${getWeatherIcon(currentCode)}</div>
+      <div class='weather-temp'>${currentTemp}°C</div>
+      <div class='weather-desc'>${currentWind} km/h wind</div>
       <div style='color:var(--text-dim);margin-top:.5rem'>Chicago</div>
       <div class='weather-forecast'>${fHTML}</div>`;
   }catch(err){

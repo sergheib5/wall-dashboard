@@ -11,17 +11,21 @@ let cur=0;
 let slideInterval=null;
 
 function showSlide(index){
-  if(!slides||slides.length===0)slides=Array.from(document.querySelectorAll(".slide")).filter(s=>s.id!=="marketsSlide");
+  // Cache slides to avoid repeated DOM queries
+  if(!slides||slides.length===0){
+    slides=Array.from(document.querySelectorAll(".slide")).filter(s=>s.id!=="marketsSlide");
+  }
   if(index<0||index>=slides.length)return;
-  slides[cur].classList.remove("active");
+  if(slides[cur])slides[cur].classList.remove("active");
   cur=index;
-  slides[cur].classList.add("active");
+  if(slides[cur])slides[cur].classList.add("active");
   updateNavIndicators();
   // Handle slide-specific actions
-  if(slides[cur].id==="photosSlide"){
+  const currentSlide=slides[cur];
+  if(currentSlide?.id==="photosSlide"){
     if(typeof loadPhoto==="function")loadPhoto();
   }
-  if(slides[cur].id==="quotesSlide"){
+  if(currentSlide?.id==="quotesSlide"){
     if(typeof loadQuote==="function")loadQuote();
   }
 }
@@ -41,18 +45,31 @@ function startAutoRotation(){
   slideInterval=setInterval(()=>nextSlide(false),SLIDE_DURATION);
 }
 
+// Store existing listeners to prevent memory leaks
+let navDotListeners = [];
+
 function updateNavIndicators(){
   const indicators=document.getElementById("navIndicators");
   if(!indicators)return;
+  
+  // Remove old listeners to prevent memory leaks
+  navDotListeners.forEach(({element,handler})=>{
+    element.removeEventListener("click",handler);
+  });
+  navDotListeners = [];
+  
   indicators.innerHTML=Array.from(slides).map((_,i)=>
     `<button class="nav-dot ${i===cur?"active":""}" data-slide="${i}" aria-label="Go to slide ${i+1}"></button>`
   ).join("");
-  // Add click handlers to dots
+  
+  // Add click handlers to dots with proper cleanup tracking
   indicators.querySelectorAll(".nav-dot").forEach((dot,i)=>{
-    dot.addEventListener("click",()=>{
+    const handler=()=>{
       showSlide(i);
       startAutoRotation(); // Reset timer when clicking indicator
-    });
+    };
+    dot.addEventListener("click",handler);
+    navDotListeners.push({element:dot,handler});
   });
 }
 
@@ -63,14 +80,23 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(prevBtn)prevBtn.addEventListener("click",()=>prevSlide(true));
   if(nextBtn)nextBtn.addEventListener("click",()=>nextSlide(true));
   
-  // Touch/swipe support
+  // Touch/swipe support with debouncing
   let touchStartX=0;
   let touchEndX=0;
-  document.addEventListener("touchstart",e=>{touchStartX=e.changedTouches[0].screenX;});
+  let lastSwipeTime=0;
+  const SWIPE_THRESHOLD=50;
+  const SWIPE_DEBOUNCE=300; // ms
+  
+  document.addEventListener("touchstart",e=>{
+    touchStartX=e.changedTouches[0].screenX;
+  });
   document.addEventListener("touchend",e=>{
+    const now=Date.now();
+    if(now-lastSwipeTime<SWIPE_DEBOUNCE)return; // Debounce
     touchEndX=e.changedTouches[0].screenX;
     const diff=touchStartX-touchEndX;
-    if(Math.abs(diff)>50){ // minimum swipe distance
+    if(Math.abs(diff)>SWIPE_THRESHOLD){
+      lastSwipeTime=now;
       if(diff>0)nextSlide(true);else prevSlide(true);
     }
   });
@@ -85,22 +111,36 @@ document.addEventListener("DOMContentLoaded",()=>{
   startAutoRotation();
 });
 
-// CLOCK
-setInterval(()=>{const el=document.getElementById("clock");if(el)el.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});},1000);
+// CLOCK - Optimized update
+let clockElement = null;
+function updateClock(){
+  if(!clockElement)clockElement=document.getElementById("clock");
+  if(clockElement)clockElement.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+}
+setInterval(updateClock,1000);
+updateClock(); // Initial update
 
-// PROXY FETCH
-async function fetchRaw(url){
+// PROXY FETCH with timeout and better error handling
+async function fetchRaw(url, timeout=10000){
+  if(!url)return null;
   const proxies=["https://api.allorigins.win/get?url=","https://corsproxy.io/?"];
   for(const p of proxies){
     try{
-      const r=await fetch(p+encodeURIComponent(url));
-      if(!r.ok) continue;
+      const controller=new AbortController();
+      const timeoutId=setTimeout(()=>controller.abort(),timeout);
+      const r=await fetch(p+encodeURIComponent(url),{signal:controller.signal});
+      clearTimeout(timeoutId);
+      if(!r.ok)continue;
       const ct=r.headers.get("content-type")||"";
       if(ct.includes("application/json")){
-        const j=await r.json(); if(j && j.contents) return j.contents;
+        const j=await r.json();
+        if(j&&j.contents)return j.contents;
       }
       return await r.text();
-    }catch{}
+    }catch(err){
+      if(err.name==="AbortError")console.warn("Fetch timeout for",url);
+      continue;
+    }
   }
   return null;
 }

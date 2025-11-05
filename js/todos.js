@@ -18,13 +18,23 @@ async function loadTodos(){
       return{ text:cleanText, checked };
     });
 
-    c.innerHTML=parsed.map(t=>`
-      <div class='todo-item'>
-        <input type="checkbox" ${t.checked?"checked":""} disabled>
-        <label style="flex:1;${t.checked?"text-decoration:line-through;color:var(--text-dim);":""}">
-          ${t.text}
-        </label>
-      </div>`).join("");
+    // HTML sanitization helper
+    function escapeHtml(text) {
+      if (typeof text !== 'string') return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    c.innerHTML=parsed.map(t=>{
+      const safeText = escapeHtml(t.text);
+      const checkedAttr = t.checked ? "checked" : "";
+      const styleAttr = t.checked ? "text-decoration:line-through;color:var(--text-dim);" : "";
+      return `<div class='todo-item'>
+        <input type="checkbox" ${checkedAttr} disabled>
+        <label style="flex:1;${styleAttr}">${safeText}</label>
+      </div>`;
+    }).join("");
   }catch(err){console.error(err);c.innerHTML="<div class='loading'>Error loading tasks</div>";}
 }
 

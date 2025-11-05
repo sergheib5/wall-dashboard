@@ -1,8 +1,7 @@
 // TIMEZONES – display multiple time zones
 const TIMEZONES = [
-  { name: "Poland", zone: "Europe/Warsaw", label: "Warsaw" },
-  { name: "Barcelona", zone: "Europe/Madrid", label: "Barcelona" },
-  { name: "San Francisco", zone: "America/Los_Angeles", label: "San Francisco" }
+  { name: "Spain", zone: "Europe/Madrid", label: "Barcelona" },
+  { name: "Pacific Time", zone: "America/Los_Angeles", label: "San Francisco" }
 ];
 
 function formatTime(date, zone) {
@@ -23,18 +22,28 @@ function formatDate(date, zone) {
   });
 }
 
+// HTML sanitization helper
+function escapeHtml(text) {
+  if (typeof text !== 'string') return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 function updateTimezones() {
   const container = document.getElementById("timezonesContainer");
   if (!container) return;
 
   const now = new Date();
   const html = TIMEZONES.map(tz => {
-    const time = formatTime(now, tz.zone);
-    const date = formatDate(now, tz.zone);
+    const time = escapeHtml(formatTime(now, tz.zone));
+    const date = escapeHtml(formatDate(now, tz.zone));
+    const label = escapeHtml(tz.label);
+    const name = escapeHtml(tz.name);
     return `
       <div class="timezone-card">
-        <div class="timezone-label">${tz.label}</div>
-        <div class="timezone-name">${tz.name}</div>
+        <div class="timezone-label">${label}</div>
+        <div class="timezone-name">${name}</div>
         <div class="timezone-time">${time}</div>
         <div class="timezone-date">${date}</div>
       </div>
