@@ -70,8 +70,8 @@ async function loadWeather(){
         <div class='temp'>${todayMin}° / ${todayMax}°</div>
       </div>`;
     
-    // Next 3 days forecast (starting from todayIndex+1)
-    for(let i=todayIndex+1;i<=todayIndex+3 && i<days.length;i++){
+    // Next 2 days forecast (starting from todayIndex+1)
+    for(let i=todayIndex+1;i<=todayIndex+2 && i<days.length;i++){
       const date=new Date(days[i]+"T12:00:00"); // Add time to avoid timezone shifts
       const label=date.toLocaleDateString("en-US",{weekday:"short",timeZone:"America/Chicago"});
       const code=codes[i]??0;
@@ -90,8 +90,10 @@ async function loadWeather(){
     const currentWind=Math.round(current.windspeed??0);
     
     c.innerHTML=`
-      <div class='weather-icon'>${getWeatherIcon(currentCode)}</div>
-      <div class='weather-temp'>${currentTemp}°</div>
+      <div class='weather-main'>
+        <div class='weather-icon'>${getWeatherIcon(currentCode)}</div>
+        <div class='weather-temp'>${currentTemp}°</div>
+      </div>
       <div class='weather-desc'>${currentWind} km/h wind</div>
       <div class='weather-location'>Chicago</div>
       <div class='weather-forecast'>${fHTML}</div>`;
