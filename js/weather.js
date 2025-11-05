@@ -21,11 +21,28 @@ async function loadWeather(){
 
     // current conditions
     const current=data.current_weather;
-    const todayIndex=0;
     const days=data.daily.time;
     const minT=data.daily.temperature_2m_min;
     const maxT=data.daily.temperature_2m_max;
     const codes=data.daily.weathercode;
+
+    // Get today's date in Chicago timezone (YYYY-MM-DD format)
+    const now=new Date();
+    const formatter=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago"}); // en-CA gives YYYY-MM-DD format
+    const todayStr=formatter.format(now);
+    
+    // Find the first date that is today or later (filter out past dates)
+    let todayIndex=-1;
+    for(let i=0;i<days.length;i++){
+      // Compare dates as strings (YYYY-MM-DD format is lexicographically sortable)
+      if(days[i]>=todayStr){
+        todayIndex=i;
+        break;
+      }
+    }
+    
+    // If today not found, start from the first available date
+    if(todayIndex===-1)todayIndex=0;
 
     // map weather codes to emoji
     function getIcon(code){
@@ -40,16 +57,26 @@ async function loadWeather(){
       return "🌤️";
     }
 
-    // build forecast for next 3 days (skip today)
+    // build forecast: today's min/max and next 3 days
     let fHTML="";
-    for(let i=1;i<=3 && i<days.length;i++){
-      const date=new Date(days[i]);
-      const label=date.toLocaleDateString("en-US",{weekday:"short"});
+    
+    // Today's forecast card - show "Today" instead of day name
+    fHTML+=`
+      <div class='forecast-card'>
+        <div class='date'>Today</div>
+        <div class='icon'>${getIcon(codes[todayIndex])}</div>
+        <div class='temp'>${Math.round(minT[todayIndex])}° / ${Math.round(maxT[todayIndex])}°</div>
+      </div>`;
+    
+    // Next 3 days forecast (starting from todayIndex+1)
+    for(let i=todayIndex+1;i<=todayIndex+3 && i<days.length;i++){
+      const date=new Date(days[i]+"T12:00:00"); // Add time to avoid timezone shifts
+      const label=date.toLocaleDateString("en-US",{weekday:"short",timeZone:"America/Chicago"});
       fHTML+=`
         <div class='forecast-card'>
           <div class='date'>${label}</div>
           <div class='icon'>${getIcon(codes[i])}</div>
-          <div class='temp'>${minT[i]}° / ${maxT[i]}°</div>
+          <div class='temp'>${Math.round(minT[i])}° / ${Math.round(maxT[i])}°</div>
         </div>`;
     }
 

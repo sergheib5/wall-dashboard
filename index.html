@@ -29,7 +29,7 @@
 </div>
 
 <!-- Markets -->
-<div class="slide" id="marketsSlide">
+<div class="slide" id="marketsSlide" style="display:none;">
   <div class="container">
     <div id="marketsGrid" class="market-grid"><div class="loading">Loading stock data...</div></div>
   </div>
@@ -49,12 +49,35 @@
   </div>
 </div>
 
+<!-- Time Zones -->
+<div class="slide" id="timezonesSlide">
+  <div class="container">
+    <div class="card" id="timezonesContainer"><div class="loading">Loading time zones...</div></div>
+  </div>
+</div>
+
+<!-- Quotes -->
+<div class="slide" id="quotesSlide">
+  <div class="container quotes-container">
+    <div class="card" id="quotesContainer"><div class="loading">Loading quote...</div></div>
+  </div>
+</div>
+
+<!-- Navigation Controls -->
+<div class="nav-controls">
+  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">‹</button>
+  <div class="nav-indicators" id="navIndicators"></div>
+  <button class="nav-btn" id="nextBtn" aria-label="Next slide">›</button>
+</div>
+
 <div class="vignette"></div>
 
 <script src="js/todos.js"></script>
 <script src="js/markets.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/photos.js"></script>
+<script src="js/timezones.js"></script>
+<script src="js/quotes.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
