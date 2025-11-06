@@ -111,11 +111,41 @@ document.addEventListener("DOMContentLoaded",()=>{
   startAutoRotation();
 });
 
-// CLOCK - Optimized update
+// CLOCK - Optimized update with AM/PM styling
 let clockElement = null;
+let clockAmpmElement = null;
 function updateClock(){
-  if(!clockElement)clockElement=document.getElementById("clock");
-  if(clockElement)clockElement.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  if(!clockElement){
+    clockElement=document.getElementById("clock");
+  }
+  if(!clockElement)return;
+  
+  // Setup AM/PM element if needed
+  if(!clockAmpmElement){
+    const wrapper=clockElement.parentElement;
+    if(wrapper && wrapper.classList.contains("clock-wrapper")){
+      clockAmpmElement=document.getElementById("clockAmpm");
+      if(!clockAmpmElement){
+        const ampm=document.createElement("span");
+        ampm.className="clock-ampm";
+        ampm.id="clockAmpm";
+        wrapper.appendChild(ampm);
+        clockAmpmElement=ampm;
+      }
+    }
+  }
+  
+  const now=new Date();
+  const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true});
+  const timeMatch=timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)$/);
+  if(timeMatch && clockAmpmElement){
+    clockElement.textContent=timeMatch[1];
+    clockAmpmElement.textContent=timeMatch[2];
+  }else if(timeMatch){
+    clockElement.textContent=timeMatch[1] + ' ' + timeMatch[2];
+  }else{
+    clockElement.textContent=timeStr;
+  }
 }
 setInterval(updateClock,1000);
 updateClock(); // Initial update

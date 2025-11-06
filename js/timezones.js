@@ -36,7 +36,11 @@ function updateTimezones() {
 
   const now = new Date();
   const html = TIMEZONES.map(tz => {
-    const time = escapeHtml(formatTime(now, tz.zone));
+    const timeStr = formatTime(now, tz.zone);
+    // Split time and AM/PM
+    const timeMatch = timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)$/);
+    const time = escapeHtml(timeMatch ? timeMatch[1] : timeStr);
+    const ampm = timeMatch ? escapeHtml(timeMatch[2]) : '';
     const date = escapeHtml(formatDate(now, tz.zone));
     const label = escapeHtml(tz.label);
     const name = escapeHtml(tz.name);
@@ -44,7 +48,10 @@ function updateTimezones() {
       <div class="timezone-card">
         <div class="timezone-label">${label}</div>
         <div class="timezone-name">${name}</div>
-        <div class="timezone-time">${time}</div>
+        <div class="timezone-time-wrapper">
+          <div class="timezone-time">${time}</div>
+          ${ampm ? `<span class="timezone-ampm">${ampm}</span>` : ''}
+        </div>
         <div class="timezone-date">${date}</div>
       </div>
     `;
