@@ -5,10 +5,12 @@ let photosLoaded=false;
 // Dynamically load photos from photos.json
 async function initPhotos(){
   try{
-    const response=await fetch('data/photos.json');
+    // Add cache busting to ensure we get the latest photos.json
+    const cacheBuster='?v='+Date.now();
+    const response=await fetch('data/photos.json'+cacheBuster);
     if(!response.ok){
       console.warn('Could not load photos.json, using fallback');
-      photos=['data/IMG_1523.jpeg','data/IMG_5053.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg']; // fallback
+      photos=['data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg']; // fallback
       photosLoaded=true;
       return;
     }
@@ -18,12 +20,12 @@ async function initPhotos(){
       photosLoaded=true;
       return;
     }
-    console.log(`Loaded ${photos.length} photos:`,photos);
+    console.log(`✅ Loaded ${photos.length} photos:`,photos);
     photosLoaded=true;
   }catch(err){
     console.error('Error loading photos:',err);
     // Fallback to known photos
-    photos=['data/IMG_1523.jpeg','data/IMG_5053.jpeg','data/IMG_3441.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg'];
+    photos=['data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg'];
     photosLoaded=true;
   }
 }
