@@ -1,19 +1,25 @@
 // CONFIG
-const STOCKS_CSV="https://docs.google.com/spreadsheets/d/e/2PACX-1vSgZpS602vubcDBZttiflnjNHTavsQ_l1_epvqL7Vuc39rhciIXdcltL4pnJVSzUnZE8Wc6_2uNHsDL/pub?gid=0&single=true&output=csv";
 const TODO_DOC="https://docs.google.com/document/d/e/2PACX-1vQ3c5d6aalilb8iHsKSVXs6GDRo2UULnQoQWUBiiGZeoym3oDXmCYz-_AKJJ19UIwXex-3Cqv7QjHoE/pub";
-const WEATHER_LOC="Chicago,US";
+const WEATHER_CONFIG={
+  query:"Chicago",
+  countryCode:"US",
+  label:"Chicago",
+  units:{
+    temperature:"celsius",
+    windSpeed:"mph"
+  }
+};
 const SLIDE_DURATION=60000; // milliseconds (60 seconds default)
-const FINNHUB_API_KEY=""; // Optional: Add your free Finnhub API key at https://finnhub.io (free tier: 60 calls/minute)
 
 // SLIDES
-let slides=Array.from(document.querySelectorAll(".slide")).filter(s=>s.id!=="marketsSlide");
+let slides=Array.from(document.querySelectorAll(".slide"));
 let cur=0;
 let slideInterval=null;
 
 function showSlide(index){
   // Cache slides to avoid repeated DOM queries
   if(!slides||slides.length===0){
-    slides=Array.from(document.querySelectorAll(".slide")).filter(s=>s.id!=="marketsSlide");
+    slides=Array.from(document.querySelectorAll(".slide"));
   }
   if(index<0||index>=slides.length)return;
   if(slides[cur])slides[cur].classList.remove("active");
@@ -136,7 +142,11 @@ function updateClock(){
   }
   
   const now=new Date();
-  const timeStr=now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",hour12:true});
+  const timeOptions={hour:"2-digit",minute:"2-digit",hour12:true};
+  if(window.dashboardTimeZone){
+    timeOptions.timeZone=window.dashboardTimeZone;
+  }
+  const timeStr=now.toLocaleTimeString("en-US",timeOptions);
   const timeMatch=timeStr.match(/^(\d{1,2}:\d{2})\s*(AM|PM)$/);
   if(timeMatch && clockAmpmElement){
     clockElement.textContent=timeMatch[1];
@@ -186,7 +196,9 @@ async function fetchJSON(url){
 }
 
 // INIT
-loadTodos();loadMarkets();loadWeather();
+loadTodos();loadWeather();
+// Pre-load quote on page load so it's ready when user navigates to quotes slide
+if(typeof loadQuote==="function")loadQuote();
 // Wait for photos to load, then show first photo if photos slide is initially active
 (async()=>{
   if(typeof initPhotos==="function")await initPhotos();
@@ -195,13 +207,6 @@ loadTodos();loadMarkets();loadWeather();
     if(typeof loadPhoto==="function")loadPhoto();
   }
 })();
-// Load quote if quotes slide is initially active
-const quotesSlide=document.getElementById("quotesSlide");
-if(quotesSlide&&quotesSlide.classList.contains("active")){
-  if(typeof loadQuote==="function")loadQuote();
-}
 setInterval(loadTodos,120000);
-setInterval(loadMarkets,120000);
 setInterval(loadWeather,600000);
 // Photo rotation is now handled by slide rotation, no separate interval needed
-

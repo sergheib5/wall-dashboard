@@ -2,7 +2,6 @@
   --bg:#0d1117; --card-bg:#161b22; --card-hover:#1f252e;
   --accent:#6c63ff; --accent-light:#00bcd4;
   --text:#c9d1d9; --text-dim:#8b949e; --glow:rgba(108,99,255,0.4);
-  --market-up:#00ff88; --market-down:#ff4444;
   
   /* Design System - Consistent Values */
   --border-radius-card:24px;
@@ -29,12 +28,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 .todo-item{display:flex;align-items:center;padding:1.8rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:1.7rem;font-weight:400;color:rgba(255,255,255,.9);letter-spacing:.2px}
 .todo-item:last-child{border-bottom:none}
 .todo-item input[type=checkbox]{accent-color:rgba(255,255,255,.6);cursor:default;transform:scale(1.4);margin-right:1.2rem;filter:drop-shadow(0 2px 8px rgba(255,255,255,.1))}
-.market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem}
-.market-card{background:rgba(255,255,255,var(--card-bg-alpha));backdrop-filter:blur(var(--blur-card));-webkit-backdrop-filter:blur(var(--blur-card));border:1px solid rgba(255,255,255,var(--card-border-alpha));padding:2.5rem;border-radius:var(--border-radius-card);box-shadow:var(--shadow-card);transition:all var(--transition-speed) var(--transition-smooth)}
-.market-card:hover{background:rgba(255,255,255,var(--card-bg-hover-alpha));transform:translateY(-4px);border-color:rgba(255,255,255,var(--card-border-hover-alpha))}
-.market-name{font-size:1.4rem;font-weight:500;margin-bottom:1rem;color:rgba(255,255,255,.7);letter-spacing:.3px}
-.market-price{font-size:3.5rem;font-weight:300;color:rgba(255,255,255,.95);letter-spacing:-1.5px;margin-bottom:.8rem;line-height:1}
-.market-change{font-size:1.2rem;font-weight:400;margin-top:.5rem;letter-spacing:.2px}
 .weather-container{text-align:center;max-width:700px;margin:0 auto;padding-bottom:calc(100px + env(safe-area-inset-bottom));align-items:center}
 .clock-wrapper{position:relative;display:inline-flex;align-items:flex-start;margin-bottom:1.2rem;gap:0.5rem;align-self:center}
 .clock{font-size:3.5rem;font-weight:300;color:rgba(255,255,255,.9);letter-spacing:-1px;line-height:1}
@@ -57,17 +50,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 .photo-frame[src=""]{opacity:0}
 .vignette{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(0,0,0,0)60%,rgba(0,0,0,.6)100%);pointer-events:none}
 
-/* Time Zones */
-#timezonesContainer{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem}
-.timezone-card{background:rgba(255,255,255,var(--card-bg-alpha));backdrop-filter:blur(var(--blur-card));-webkit-backdrop-filter:blur(var(--blur-card));border:1px solid rgba(255,255,255,var(--card-border-alpha));border-radius:var(--border-radius-card);padding:2.5rem;text-align:center;box-shadow:var(--shadow-card);transition:all var(--transition-speed) var(--transition-smooth)}
-.timezone-card:hover{background:rgba(255,255,255,var(--card-bg-hover-alpha));transform:translateY(-4px);border-color:rgba(255,255,255,var(--card-border-hover-alpha))}
-.timezone-label{font-size:1rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:1rem;font-weight:500}
-.timezone-name{font-size:1.9rem;font-weight:400;margin-bottom:1.5rem;color:rgba(255,255,255,.8);letter-spacing:.3px}
-.timezone-time-wrapper{position:relative;display:inline-flex;align-items:flex-start;margin-bottom:.8rem;gap:0.5rem}
-.timezone-time{font-size:4.5rem;font-weight:200;color:rgba(255,255,255,.95);letter-spacing:-2px;line-height:1}
-.timezone-ampm{font-size:1rem;font-weight:400;color:rgba(255,255,255,.6);letter-spacing:0;line-height:1;margin-top:0.2rem}
-.timezone-date{font-size:1.3rem;color:rgba(255,255,255,.6);font-weight:300;letter-spacing:.2px}
-
 /* Quotes */
 .quotes-container{text-align:center;max-width:1000px;margin:0 auto}
 #quotesContainer{background:rgba(255,255,255,var(--card-bg-alpha));backdrop-filter:blur(var(--blur-card));-webkit-backdrop-filter:blur(var(--blur-card));border:1px solid rgba(255,255,255,var(--card-border-alpha));border-radius:var(--border-radius-card);padding:4rem 3rem;box-shadow:var(--shadow-card);min-height:300px;display:flex;flex-direction:column;justify-content:center;transition:all var(--transition-speed) var(--transition-smooth)}
@@ -88,4 +70,3 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 
 /* iPad/iOS PWA fixes */
 @supports(padding:max(0px)){body{padding-bottom:env(safe-area-inset-bottom)}}
-

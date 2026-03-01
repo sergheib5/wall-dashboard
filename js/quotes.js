@@ -1,5 +1,6 @@
 // QUOTES – fetch quotes from API (new quote each time slide is shown)
-let quoteIndex = 0;
+const LOCAL_QUOTE_STATE_KEY = "wallDashboardLocalQuoteState";
+const LAST_QUOTE_SIGNATURE_KEY = "wallDashboardLastQuoteSignature";
 
 // Local quotes array as fallback (rotates like photos)
 const localQuotes = [
@@ -25,6 +26,147 @@ const localQuotes = [
   { text: "Great things never come from comfort zones.", author: "Unknown" }
 ];
 
+function getLocalDayKey() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function createSeededRandom(seed) {
+  let state = seed || 1;
+  return function seededRandom() {
+    state = (state + 0x6D2B79F5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function createDailyQuoteOrder(dayKey) {
+  const order = localQuotes.map((_, index) => index);
+  const random = createSeededRandom(hashString(dayKey));
+
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+
+  return order;
+}
+
+function readStoredLocalQuoteState() {
+  try {
+    const rawState = localStorage.getItem(LOCAL_QUOTE_STATE_KEY);
+    if (!rawState) return null;
+    return JSON.parse(rawState);
+  } catch (err) {
+    console.warn("⚠️ Failed to read stored local quote state:", err.message);
+    return null;
+  }
+}
+
+function writeStoredLocalQuoteState(state) {
+  try {
+    localStorage.setItem(LOCAL_QUOTE_STATE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn("⚠️ Failed to store local quote state:", err.message);
+  }
+}
+
+function getLocalQuoteState() {
+  const dayKey = getLocalDayKey();
+  const storedState = readStoredLocalQuoteState();
+  const hasValidStoredState = Boolean(
+    storedState &&
+    Array.isArray(storedState.order) &&
+    storedState.order.length === localQuotes.length &&
+    Number.isInteger(storedState.nextPosition) &&
+    storedState.nextPosition >= 0 &&
+    storedState.nextPosition < localQuotes.length &&
+    storedState.dayKey === dayKey
+  );
+
+  if (hasValidStoredState) {
+    return storedState;
+  }
+
+  const order = createDailyQuoteOrder(dayKey);
+
+  if (
+    storedState &&
+    Array.isArray(storedState.order) &&
+    storedState.order.length === localQuotes.length &&
+    localQuotes.length > 1 &&
+    storedState.dayKey !== dayKey &&
+    storedState.order[0] === order[0]
+  ) {
+    order.push(order.shift());
+  }
+
+  const freshState = {
+    dayKey,
+    order,
+    nextPosition: 0
+  };
+
+  writeStoredLocalQuoteState(freshState);
+  return freshState;
+}
+
+function getNextLocalQuote() {
+  const state = getLocalQuoteState();
+  const quoteIndex = state.order[state.nextPosition];
+  const quote = localQuotes[quoteIndex];
+  const nextPosition = (state.nextPosition + 1) % localQuotes.length;
+
+  writeStoredLocalQuoteState({
+    ...state,
+    nextPosition
+  });
+
+  return {
+    quote,
+    quoteIndex,
+    sequencePosition: state.nextPosition
+  };
+}
+
+function getQuoteSignature(quote) {
+  if (!quote || !quote.text) return '';
+  return `${quote.text}::${quote.author || ''}`;
+}
+
+function readLastQuoteSignature() {
+  try {
+    return localStorage.getItem(LAST_QUOTE_SIGNATURE_KEY) || '';
+  } catch (err) {
+    console.warn("⚠️ Failed to read last quote signature:", err.message);
+    return '';
+  }
+}
+
+function writeLastQuoteSignature(quote) {
+  const signature = getQuoteSignature(quote);
+  if (!signature) return;
+
+  try {
+    localStorage.setItem(LAST_QUOTE_SIGNATURE_KEY, signature);
+  } catch (err) {
+    console.warn("⚠️ Failed to store last quote signature:", err.message);
+  }
+}
+
 // HTML sanitization helper
 function escapeHtml(text) {
   if (typeof text !== 'string') return '';
@@ -35,6 +177,7 @@ function escapeHtml(text) {
 
 async function loadQuote() {
   const timestamp = Date.now();
+  const lastQuoteSignature = readLastQuoteSignature();
   console.log(`🔄 loadQuote() called at ${new Date().toISOString()} (timestamp: ${timestamp})`);
   
   const container = document.getElementById("quotesContainer");
@@ -101,6 +244,11 @@ async function loadQuote() {
       if (!quote || !quote.text) {
         throw new Error("Invalid quote data received");
       }
+
+      if (getQuoteSignature(quote) === lastQuoteSignature) {
+        console.log(`🔁 ${api.name} returned the same quote as last time, trying next source`);
+        continue;
+      }
       
       console.log(`✅ Successfully loaded quote from ${api.name}:`, quote);
       displayQuote(quote, container);
@@ -113,13 +261,14 @@ async function loadQuote() {
     }
   }
   
-  // If all APIs failed, use local quotes array (rotates like photos)
+  // If all APIs failed, use the local quotes array in a daily shuffled order.
   console.warn("⚠️ All quote APIs failed, using local quotes");
-  const currentIndex = quoteIndex;
-  const localQuote = localQuotes[currentIndex];
-  quoteIndex = (quoteIndex + 1) % localQuotes.length;
-  console.log(`📚 Using local quote ${currentIndex + 1}/${localQuotes.length}:`, localQuote);
-  displayQuote(localQuote, container);
+  const localQuoteState = getNextLocalQuote();
+  console.log(
+    `📚 Using local quote ${localQuoteState.quoteIndex + 1}/${localQuotes.length} (slot ${localQuoteState.sequencePosition + 1}/${localQuotes.length} for ${getLocalDayKey()}):`,
+    localQuoteState.quote
+  );
+  displayQuote(localQuoteState.quote, container);
 }
 
 function displayQuote(quote, container) {
@@ -136,9 +285,6 @@ function displayQuote(quote, container) {
   `;
   console.log("📝 Setting innerHTML to:", html.substring(0, 100) + "...");
   container.innerHTML = html;
+  writeLastQuoteSignature(quote);
   console.log("✅ Quote displayed");
 }
-
-// Initialize on load
-loadQuote();
-

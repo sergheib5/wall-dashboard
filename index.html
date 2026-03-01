@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://api.quotable.io https://zenquotes.io https://api.allorigins.win https://corsproxy.io https://docs.google.com; frame-src https://calendar.google.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.quotable.io https://zenquotes.io https://api.allorigins.win https://corsproxy.io https://docs.google.com; frame-src https://calendar.google.com;">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
@@ -30,13 +30,6 @@
   </div>
 </div>
 
-<!-- Markets -->
-<div class="slide" id="marketsSlide" style="display:none;">
-  <div class="container">
-    <div id="marketsGrid" class="market-grid"><div class="loading">Loading stock data...</div></div>
-  </div>
-</div>
-
 <!-- Weather -->
 <div class="slide" id="weatherSlide">
   <div class="container weather-container">
@@ -48,13 +41,6 @@
 <div class="slide" id="photosSlide">
   <div class="container photos-container">
     <img id="photoFrame" class="photo-frame">
-  </div>
-</div>
-
-<!-- Time Zones -->
-<div class="slide" id="timezonesSlide">
-  <div class="container">
-    <div class="card" id="timezonesContainer"><div class="loading">Loading time zones...</div></div>
   </div>
 </div>
 
@@ -75,10 +61,8 @@
 <div class="vignette"></div>
 
 <script src="js/todos.js"></script>
-<script src="js/markets.js"></script>
 <script src="js/weather.js"></script>
 <script src="js/photos.js"></script>
-<script src="js/timezones.js"></script>
 <script src="js/quotes.js"></script>
 <script src="js/adaptive-transparency.js"></script>
 <script src="js/main.js"></script>

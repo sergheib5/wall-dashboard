@@ -1,33 +1,49 @@
 let photos=[];
 let photoIndex=0;
 let photosLoaded=false;
+let photosInitPromise=null;
+const FALLBACK_PHOTOS=['data/IMG_0258.jpg','data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_5305.jpg','data/IMG_9133.jpeg','data/IMG_9134.jpg'];
+
+function useFallbackPhotos(){
+  photos=[...FALLBACK_PHOTOS];
+  photosLoaded=true;
+  return photos;
+}
 
 // Dynamically load photos from photos.json
 async function initPhotos(){
-  try{
-    // Add cache busting to ensure we get the latest photos.json
-    const cacheBuster='?v='+Date.now();
-    const response=await fetch('data/photos.json'+cacheBuster);
-    if(!response.ok){
-      console.warn('Could not load photos.json, using fallback');
-      photos=['data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg']; // fallback
+  if(photosLoaded)return photos;
+  if(photosInitPromise)return await photosInitPromise;
+
+  photosInitPromise=(async()=>{
+    try{
+      // Add cache busting to ensure we get the latest photos.json
+      const cacheBuster='?v='+Date.now();
+      const response=await fetch('data/photos.json'+cacheBuster);
+      if(!response.ok){
+        console.warn('Could not load photos.json, using fallback');
+        return useFallbackPhotos();
+      }
+      const nextPhotos=await response.json();
+      if(!Array.isArray(nextPhotos)||nextPhotos.length===0){
+        console.warn('No photos found in photos.json');
+        photos=[];
+        photosLoaded=true;
+        return photos;
+      }
+      photos=nextPhotos;
       photosLoaded=true;
-      return;
+      console.log(`Loaded ${photos.length} photos`,photos);
+      return photos;
+    }catch(err){
+      console.error('Error loading photos:',err);
+      return useFallbackPhotos();
+    }finally{
+      photosInitPromise=null;
     }
-    photos=await response.json();
-    if(photos.length===0){
-      console.warn('No photos found in photos.json');
-      photosLoaded=true;
-      return;
-    }
-    console.log(`✅ Loaded ${photos.length} photos:`,photos);
-    photosLoaded=true;
-  }catch(err){
-    console.error('Error loading photos:',err);
-    // Fallback to known photos
-    photos=['data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_7818.jpeg','data/IMG_9133.jpeg'];
-    photosLoaded=true;
-  }
+  })();
+
+  return await photosInitPromise;
 }
 
 let photoLoadTimeout = null;
@@ -43,9 +59,13 @@ function loadPhoto(){
   }
   
   // Wait for photos to load
-  if(!photosLoaded||photos.length===0){
+  if(!photosLoaded){
     console.log('Photos not loaded yet, waiting...');
     photoLoadTimeout=setTimeout(loadPhoto,100);
+    return;
+  }
+  if(photos.length===0){
+    el.removeAttribute('src');
     return;
   }
   
@@ -67,6 +87,3 @@ function loadPhoto(){
     photoIndex=(photoIndex+1)%photos.length;
   },250);
 }
-
-// Initialize photos on load
-initPhotos();
