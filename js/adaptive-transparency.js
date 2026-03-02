@@ -11,9 +11,6 @@
   const DARK_BORDER_ALPHA = 0.1;
   const LIGHT_BORDER_ALPHA = 0.25;
   
-  let currentBrightness = 0;
-  let observer = null;
-  
   // Calculate luminance from RGB
   function getLuminance(r, g, b) {
     const [rs, gs, bs] = [r, g, b].map(c => {
@@ -66,7 +63,7 @@
             };
           }
         } catch (e) {
-          console.log('Could not sample photo for adaptive transparency');
+          return { r: 13, g: 17, b: 23 };
         }
       }
     }
@@ -90,7 +87,6 @@
   function updateTransparency() {
     const color = getAverageBackgroundColor();
     const luminance = getLuminance(color.r, color.g, color.b);
-    currentBrightness = luminance;
     
     // Determine if background is light or dark
     const isLight = luminance > BRIGHTNESS_THRESHOLD;
@@ -133,9 +129,6 @@
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(updateTransparency, 250);
     });
-    
-    // Periodic check (useful if background changes)
-    setInterval(updateTransparency, 5000);
   }
   
   // Initialize when DOM is ready
@@ -145,5 +138,4 @@
     initAdaptiveTransparency();
   }
 })();
-
 

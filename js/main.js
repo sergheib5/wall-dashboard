@@ -1,15 +1,7 @@
 // CONFIG
-const TODO_DOC="https://docs.google.com/document/d/e/2PACX-1vQ3c5d6aalilb8iHsKSVXs6GDRo2UULnQoQWUBiiGZeoym3oDXmCYz-_AKJJ19UIwXex-3Cqv7QjHoE/pub";
-const WEATHER_CONFIG={
-  query:"Chicago",
-  countryCode:"US",
-  label:"Chicago",
-  units:{
-    temperature:"celsius",
-    windSpeed:"mph"
-  }
-};
-const SLIDE_DURATION=60000; // milliseconds (60 seconds default)
+const APP_CONFIG=window.DASHBOARD_CONFIG||{};
+const SLIDE_DURATION=Number(APP_CONFIG.slideDurationMs)||60000;
+const CALENDAR_EMBED_URL=APP_CONFIG.calendarEmbedUrl||"";
 
 // SLIDES
 let slides=Array.from(document.querySelectorAll(".slide"));
@@ -83,8 +75,12 @@ function updateNavIndicators(){
 document.addEventListener("DOMContentLoaded",()=>{
   const prevBtn=document.getElementById("prevBtn");
   const nextBtn=document.getElementById("nextBtn");
+  const calendarFrame=document.getElementById("calendarFrame");
   if(prevBtn)prevBtn.addEventListener("click",()=>prevSlide(true));
   if(nextBtn)nextBtn.addEventListener("click",()=>nextSlide(true));
+  if(calendarFrame&&CALENDAR_EMBED_URL){
+    calendarFrame.src=CALENDAR_EMBED_URL;
+  }
   
   // Touch/swipe support with debouncing
   let touchStartX=0;
@@ -197,8 +193,6 @@ async function fetchJSON(url){
 
 // INIT
 loadTodos();loadWeather();
-// Pre-load quote on page load so it's ready when user navigates to quotes slide
-if(typeof loadQuote==="function")loadQuote();
 // Wait for photos to load, then show first photo if photos slide is initially active
 (async()=>{
   if(typeof initPhotos==="function")await initPhotos();
@@ -207,6 +201,10 @@ if(typeof loadQuote==="function")loadQuote();
     if(typeof loadPhoto==="function")loadPhoto();
   }
 })();
+const quotesSlide=document.getElementById("quotesSlide");
+if(quotesSlide&&quotesSlide.classList.contains("active")){
+  if(typeof loadQuote==="function")loadQuote();
+}
 setInterval(loadTodos,120000);
 setInterval(loadWeather,600000);
 // Photo rotation is now handled by slide rotation, no separate interval needed

@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.json?v=20260301">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=20260301">
 <title>Wall Dashboard</title>
 </head>
 <body>
@@ -24,9 +24,12 @@
 <!-- Calendar -->
 <div class="slide" id="calendarSlide">
   <div class="container">
-    <iframe class="calendar-embed"
-    style="filter: invert(1) hue-rotate(180deg); border:0;width:100%;height:90vh;border-radius:16px;"
-      src="https://calendar.google.com/calendar/embed?src=sergheib5%40gmail.com&ctz=America%2FChicago&mode=WEEK"></iframe>
+    <iframe
+      class="calendar-embed"
+      id="calendarFrame"
+      style="filter: invert(1) hue-rotate(180deg); border:0;width:100%;height:90vh;border-radius:16px;"
+      title="Calendar"
+    ></iframe>
   </div>
 </div>
 
@@ -60,11 +63,12 @@
 
 <div class="vignette"></div>
 
-<script src="js/todos.js"></script>
-<script src="js/weather.js"></script>
-<script src="js/photos.js"></script>
-<script src="js/quotes.js"></script>
-<script src="js/adaptive-transparency.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=20260301"></script>
+<script src="js/todos.js?v=20260301"></script>
+<script src="js/weather.js?v=20260301"></script>
+<script src="js/photos.js?v=20260301"></script>
+<script src="js/quotes.js?v=20260301"></script>
+<script src="js/adaptive-transparency.js?v=20260301"></script>
+<script src="js/main.js?v=20260301"></script>
 </body>
 </html>

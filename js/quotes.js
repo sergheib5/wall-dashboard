@@ -1,6 +1,7 @@
 // QUOTES – fetch quotes from API (new quote each time slide is shown)
 const LOCAL_QUOTE_STATE_KEY = "wallDashboardLocalQuoteState";
 const LAST_QUOTE_SIGNATURE_KEY = "wallDashboardLastQuoteSignature";
+const LAST_GOOD_QUOTE_CACHE_KEY = "wallDashboardLastGoodQuote";
 
 // Local quotes array as fallback (rotates like photos)
 const localQuotes = [
@@ -71,7 +72,7 @@ function readStoredLocalQuoteState() {
     if (!rawState) return null;
     return JSON.parse(rawState);
   } catch (err) {
-    console.warn("⚠️ Failed to read stored local quote state:", err.message);
+    console.warn("Failed to read stored local quote state:", err.message);
     return null;
   }
 }
@@ -80,7 +81,7 @@ function writeStoredLocalQuoteState(state) {
   try {
     localStorage.setItem(LOCAL_QUOTE_STATE_KEY, JSON.stringify(state));
   } catch (err) {
-    console.warn("⚠️ Failed to store local quote state:", err.message);
+    console.warn("Failed to store local quote state:", err.message);
   }
 }
 
@@ -151,7 +152,7 @@ function readLastQuoteSignature() {
   try {
     return localStorage.getItem(LAST_QUOTE_SIGNATURE_KEY) || '';
   } catch (err) {
-    console.warn("⚠️ Failed to read last quote signature:", err.message);
+    console.warn("Failed to read last quote signature:", err.message);
     return '';
   }
 }
@@ -163,7 +164,30 @@ function writeLastQuoteSignature(quote) {
   try {
     localStorage.setItem(LAST_QUOTE_SIGNATURE_KEY, signature);
   } catch (err) {
-    console.warn("⚠️ Failed to store last quote signature:", err.message);
+    console.warn("Failed to store last quote signature:", err.message);
+  }
+}
+
+function readCachedQuote() {
+  try {
+    const rawQuote = localStorage.getItem(LAST_GOOD_QUOTE_CACHE_KEY);
+    if (!rawQuote) return null;
+    const quote = JSON.parse(rawQuote);
+    if (!quote || typeof quote.text !== "string") return null;
+    return quote;
+  } catch (err) {
+    console.warn("Failed to read cached quote:", err.message);
+    return null;
+  }
+}
+
+function writeCachedQuote(quote) {
+  if (!quote || typeof quote.text !== "string") return;
+
+  try {
+    localStorage.setItem(LAST_GOOD_QUOTE_CACHE_KEY, JSON.stringify(quote));
+  } catch (err) {
+    console.warn("Failed to cache quote:", err.message);
   }
 }
 
@@ -178,11 +202,10 @@ function escapeHtml(text) {
 async function loadQuote() {
   const timestamp = Date.now();
   const lastQuoteSignature = readLastQuoteSignature();
-  console.log(`🔄 loadQuote() called at ${new Date().toISOString()} (timestamp: ${timestamp})`);
   
   const container = document.getElementById("quotesContainer");
   if (!container) {
-    console.warn("⚠️ Quotes container not found");
+    console.warn("Quotes container not found");
     return;
   }
 
@@ -210,34 +233,35 @@ async function loadQuote() {
 
   for (const api of quoteApis) {
     try {
-      console.log(`📡 Trying ${api.name}: ${api.url}`);
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.warn(`⏱️ ${api.name} timeout after 5 seconds`);
-        controller.abort();
-      }, 5000);
-      
-      const fetchStart = Date.now();
-      const response = await fetch(api.url, {
-        signal: controller.signal,
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+      let data;
+      if (typeof fetchRaw === "function") {
+        const raw = await fetchRaw(api.url, 5000);
+        if (!raw) {
+          throw new Error("Failed to fetch");
         }
-      });
-      clearTimeout(timeoutId);
-      
-      const fetchDuration = Date.now() - fetchStart;
-      console.log(`📥 ${api.name} response in ${fetchDuration}ms - Status: ${response.status}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        data = JSON.parse(raw);
+      } else {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 5000);
+
+        const response = await fetch(api.url, {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        }
+
+        data = await response.json();
       }
-      
-      const data = await response.json();
-      console.log(`📦 ${api.name} raw response:`, data);
       
       const quote = api.parser(data);
       
@@ -246,45 +270,42 @@ async function loadQuote() {
       }
 
       if (getQuoteSignature(quote) === lastQuoteSignature) {
-        console.log(`🔁 ${api.name} returned the same quote as last time, trying next source`);
         continue;
       }
       
-      console.log(`✅ Successfully loaded quote from ${api.name}:`, quote);
       displayQuote(quote, container);
       return; // Success, exit function
       
     } catch (err) {
-      console.warn(`⚠️ ${api.name} failed:`, err.message);
+      console.warn(`${api.name} failed:`, err.message);
       // Continue to next API
       continue;
     }
   }
-  
+
+  const cachedQuote = readCachedQuote();
+  if (cachedQuote && getQuoteSignature(cachedQuote) !== lastQuoteSignature) {
+    displayQuote(cachedQuote, container);
+    return;
+  }
+
   // If all APIs failed, use the local quotes array in a daily shuffled order.
-  console.warn("⚠️ All quote APIs failed, using local quotes");
   const localQuoteState = getNextLocalQuote();
-  console.log(
-    `📚 Using local quote ${localQuoteState.quoteIndex + 1}/${localQuotes.length} (slot ${localQuoteState.sequencePosition + 1}/${localQuotes.length} for ${getLocalDayKey()}):`,
-    localQuoteState.quote
-  );
   displayQuote(localQuoteState.quote, container);
 }
 
 function displayQuote(quote, container) {
   if (!container) {
-    console.warn("⚠️ displayQuote: container not found");
+    console.warn("displayQuote: container not found");
     return;
   }
-  console.log("🎨 displayQuote called with:", quote);
   const text = escapeHtml(quote.text || '');
   const author = quote.author ? escapeHtml(quote.author) : '';
   const html = `
     <div class="quote-text">${text}</div>
     ${author ? `<div class="quote-author">${author}</div>` : ""}
   `;
-  console.log("📝 Setting innerHTML to:", html.substring(0, 100) + "...");
   container.innerHTML = html;
   writeLastQuoteSignature(quote);
-  console.log("✅ Quote displayed");
+  writeCachedQuote(quote);
 }
