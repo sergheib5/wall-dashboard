@@ -25,9 +25,84 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 .loading{text-align:center;color:rgba(255,255,255,.5);font-size:1.4rem;font-weight:300;padding:2rem;letter-spacing:.3px}
 .card{background:rgba(255,255,255,var(--card-bg-alpha));backdrop-filter:blur(var(--blur-card));-webkit-backdrop-filter:blur(var(--blur-card));border:1px solid rgba(255,255,255,var(--card-border-alpha));border-radius:var(--border-radius-card);padding:2.5rem;box-shadow:var(--shadow-card);transition:all var(--transition-speed) var(--transition-smooth)}
 .card:hover{background:rgba(255,255,255,var(--card-bg-hover-alpha));border-color:rgba(255,255,255,var(--card-border-hover-alpha))}
-.todo-item{display:flex;align-items:center;padding:1.8rem 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:1.7rem;font-weight:400;color:rgba(255,255,255,.9);letter-spacing:.2px}
-.todo-item:last-child{border-bottom:none}
-.todo-item input[type=checkbox]{accent-color:rgba(255,255,255,.6);cursor:default;transform:scale(1.4);margin-right:1.2rem;filter:drop-shadow(0 2px 8px rgba(255,255,255,.1))}
+.todos-container{justify-content:flex-start;padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+.todo-card{
+  display:flex;
+  flex-direction:column;
+  width:min(100%,880px);
+  min-height:min(100%,80vh);
+  margin:0 auto;
+}
+.todo-section-title{
+  margin:0 0 1rem;
+  font-size:1.2rem;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.7);
+  font-weight:600;
+}
+#manualTodosGrid{
+  flex:1;
+  overflow:auto;
+}
+.manual-todo-form{
+  display:flex;
+  gap:.6rem;
+  margin:0 0 1rem;
+}
+.manual-todo-input{
+  flex:1;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  padding:.75rem .9rem;
+  font-size:1rem;
+  outline:none;
+}
+.manual-todo-input::placeholder{
+  color:rgba(255,255,255,.45);
+}
+.manual-todo-input:focus{
+  border-color:rgba(255,255,255,.45);
+}
+.manual-todo-add-btn{
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.25);
+  background:rgba(255,255,255,.12);
+  color:rgba(255,255,255,.95);
+  font-size:.95rem;
+  font-weight:600;
+  padding:.72rem .95rem;
+  cursor:pointer;
+}
+.manual-todo-add-btn:hover{
+  background:rgba(255,255,255,.2);
+}
+.manual-todo-item{
+  display:flex;
+  align-items:center;
+  gap:.95rem;
+  padding:.85rem 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.92);
+}
+.manual-todo-item:last-child{
+  border-bottom:none;
+}
+.manual-todo-item input[type=checkbox]{
+  transform:scale(1.2);
+  accent-color:rgba(255,255,255,.8);
+  flex-shrink:0;
+}
+.manual-todo-text{
+  font-size:1.12rem;
+  line-height:1.4;
+}
+.manual-todo-item.is-checked .manual-todo-text{
+  text-decoration:line-through;
+  color:var(--text-dim);
+}
 .weather-container{
   text-align:center;
   width:min(100%,1100px);
@@ -161,6 +236,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 
 @media (max-width:640px){
   .container{padding:1.1rem}
+  .todo-card{
+    min-height:auto;
+  }
+  .manual-todo-text{
+    font-size:1.02rem;
+  }
   .weather-container{
     padding:0.8rem .55rem calc(84px + env(safe-area-inset-bottom));
     justify-content:flex-start;

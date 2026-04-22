@@ -1,10 +1,8 @@
-// TODOS – detect Docs checklists and Unicode marks
-const TODOS_CACHE_KEY="wall-dashboard-todos-cache";
-const DEFAULT_TODO_DOC_URL="https://docs.google.com/document/d/e/2PACX-1vQ3c5d6aalilb8iHsKSVXs6GDRo2UULnQoQWUBiiGZeoym3oDXmCYz-_AKJJ19UIwXex-3Cqv7QjHoE/pub";
+const MANUAL_TODOS_KEY="wall-dashboard-manual-todos";
+const MAX_MANUAL_TODOS=30;
 
-function getTodoDocUrl(){
-  return window.DASHBOARD_CONFIG?.todoDocumentUrl||DEFAULT_TODO_DOC_URL;
-}
+let manualTodosState=[];
+let manualTodoDomBound=false;
 
 function escapeTodoHtml(text){
   if(typeof text!=="string")return "";
@@ -13,84 +11,106 @@ function escapeTodoHtml(text){
   return div.innerHTML;
 }
 
-function readCachedTodos(){
+function readManualTodos(){
   try{
-    const raw=localStorage.getItem(TODOS_CACHE_KEY);
-    if(!raw)return null;
+    const raw=localStorage.getItem(MANUAL_TODOS_KEY);
+    if(!raw)return [];
     const parsed=JSON.parse(raw);
-    if(!Array.isArray(parsed))return null;
-    return parsed.filter(item=>item&&typeof item.text==="string").slice(0,20);
+    if(!Array.isArray(parsed))return [];
+    return parsed
+      .filter(item=>item&&typeof item.text==="string")
+      .slice(0,MAX_MANUAL_TODOS)
+      .map(item=>({
+        id:String(item.id||`${Date.now()}-${Math.random().toString(16).slice(2)}`),
+        text:item.text.trim().slice(0,120),
+        checked:Boolean(item.checked)
+      }))
+      .filter(item=>item.text.length>0);
   }catch(err){
-    console.warn("Unable to read cached tasks",err);
-    return null;
+    console.warn("Unable to read manual tasks",err);
+    return [];
   }
 }
 
-function writeCachedTodos(items){
+function writeManualTodos(){
   try{
-    localStorage.setItem(TODOS_CACHE_KEY,JSON.stringify(items));
+    localStorage.setItem(MANUAL_TODOS_KEY,JSON.stringify(manualTodosState));
   }catch(err){
-    console.warn("Unable to cache tasks",err);
+    console.warn("Unable to save manual tasks",err);
   }
 }
 
-function renderTodos(container, items){
+function renderManualTodos(){
+  const container=document.getElementById("manualTodosGrid");
   if(!container)return;
-  if(!Array.isArray(items)||items.length===0){
-    container.innerHTML="<div class='loading'>No tasks</div>";
+
+  if(!manualTodosState.length){
+    container.innerHTML="<div class='loading'>No manual tasks yet</div>";
     return;
   }
 
-  container.innerHTML=items.map(t=>{
-    const safeText=escapeTodoHtml(t.text);
-    const checkedAttr=t.checked ? "checked" : "";
-    const styleAttr=t.checked ? "text-decoration:line-through;color:var(--text-dim);" : "";
-    return `<div class='todo-item'>
-      <input type="checkbox" ${checkedAttr} disabled>
-      <label style="flex:1;${styleAttr}">${safeText}</label>
-    </div>`;
+  container.innerHTML=manualTodosState.map(item=>{
+    const safeText=escapeTodoHtml(item.text);
+    const checkedClass=item.checked?"is-checked":"";
+    const checkedAttr=item.checked?"checked":"";
+    return `<label class="manual-todo-item ${checkedClass}">
+      <input type="checkbox" data-todo-id="${item.id}" ${checkedAttr}>
+      <span class="manual-todo-text">${safeText}</span>
+    </label>`;
   }).join("");
 }
 
-async function loadTodos(){
-  const c=document.getElementById("todosGrid");
-  try{
-    const html=await fetchRaw(getTodoDocUrl());
-    if(!html){
-      const cachedItems=readCachedTodos();
-      if(cachedItems){
-        renderTodos(c,cachedItems);
-        return;
-      }
-      c.innerHTML="<div class='loading'>Unable to load tasks</div>";
-      return;
-    }
-    const doc=new DOMParser().parseFromString(html,"text/html");
-    const rawItems=[...doc.querySelectorAll("li,p")].filter(e=>e.textContent.trim().length>0);
-    if(!rawItems.length){
-      renderTodos(c,[]);
-      writeCachedTodos([]);
-      return;
-    }
+function addManualTodo(text){
+  const normalized=(text||"").trim();
+  if(!normalized)return;
+  if(manualTodosState.length>=MAX_MANUAL_TODOS){
+    manualTodosState=manualTodosState.slice(-MAX_MANUAL_TODOS+1);
+  }
+  manualTodosState.push({
+    id:`${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    text:normalized.slice(0,120),
+    checked:false
+  });
+  writeManualTodos();
+  renderManualTodos();
+}
 
-    const parsed=rawItems.slice(0,20).map(e=>{
-      const htmlContent=e.innerHTML;
-      const text=e.textContent.trim();
-      let checked=false;
-      if(/☑|✓|✔|✅/.test(text)) checked=true;
-      if(/(check(?!box)?[^"'>]*\.(png|svg))/i.test(htmlContent)&&!/blank/i.test(htmlContent)) checked=true;
-      const cleanText=text.replace(/^[☑☐✓✔✅]\s*/,'').trim();
-      return{ text:cleanText, checked };
+function toggleManualTodo(id, checked){
+  manualTodosState=manualTodosState.map(item=>{
+    if(item.id!==id)return item;
+    return {...item, checked:Boolean(checked)};
+  });
+  writeManualTodos();
+  renderManualTodos();
+}
+
+function loadTodos(){
+  if(manualTodoDomBound)return;
+  manualTodoDomBound=true;
+  manualTodosState=readManualTodos();
+  renderManualTodos();
+
+  const form=document.getElementById("manualTodoForm");
+  const input=document.getElementById("manualTodoInput");
+  const list=document.getElementById("manualTodosGrid");
+
+  if(form&&input){
+    form.addEventListener("submit",event=>{
+      event.preventDefault();
+      addManualTodo(input.value);
+      input.value="";
+      input.focus();
     });
-    renderTodos(c,parsed);
-    writeCachedTodos(parsed);
-  }catch(err){
-    console.error(err);
-    const cachedItems=readCachedTodos();
-    if(cachedItems){
-      renderTodos(c,cachedItems);
-      return;
-    }
-    c.innerHTML="<div class='loading'>Error loading tasks</div>";
+  }
+
+  if(list){
+    list.addEventListener("change",event=>{
+      const target=event.target;
+      if(!(target instanceof HTMLInputElement))return;
+      if(target.type!=="checkbox")return;
+      const id=target.dataset.todoId;
+      if(!id)return;
+      toggleManualTodo(id,target.checked);
+    });
   }
 }

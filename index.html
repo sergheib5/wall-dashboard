@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.quotable.io https://zenquotes.io https://api.allorigins.win https://corsproxy.io https://docs.google.com; frame-src https://calendar.google.com;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.quotable.io https://zenquotes.io https://api.allorigins.win https://corsproxy.io; frame-src https://calendar.google.com;">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
@@ -16,8 +16,22 @@
 
 <!-- To-dos -->
 <div class="slide active" id="todosSlide">
-  <div class="container">
-    <div class="card" id="todosGrid"><div class="loading">Loading tasks...</div></div>
+  <div class="container todos-container">
+    <section class="card todo-card">
+      <h2 class="todo-section-title">My Checklist</h2>
+      <form id="manualTodoForm" class="manual-todo-form">
+        <input
+          id="manualTodoInput"
+          class="manual-todo-input"
+          type="text"
+          maxlength="120"
+          placeholder="Add a task and press Enter"
+          aria-label="Add task"
+        >
+        <button type="submit" class="manual-todo-add-btn">Add</button>
+      </form>
+      <div id="manualTodosGrid"><div class="loading">No manual tasks yet</div></div>
+    </section>
   </div>
 </div>
 

@@ -205,6 +205,5 @@ const quotesSlide=document.getElementById("quotesSlide");
 if(quotesSlide&&quotesSlide.classList.contains("active")){
   if(typeof loadQuote==="function")loadQuote();
 }
-setInterval(loadTodos,120000);
 setInterval(loadWeather,600000);
 // Photo rotation is now handled by slide rotation, no separate interval needed
