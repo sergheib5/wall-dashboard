@@ -1,8 +1,12 @@
 const MANUAL_TODOS_KEY="wall-dashboard-manual-todos";
 const MAX_MANUAL_TODOS=30;
+const SWIPE_DELETE_THRESHOLD=110;
+const SWIPE_MAX_TRANSLATE=140;
+const SWIPE_START_THRESHOLD=8;
 
 let manualTodosState=[];
 let manualTodoDomBound=false;
+let activeSwipe=null;
 
 function escapeTodoHtml(text){
   if(typeof text!=="string")return "";
@@ -45,7 +49,7 @@ function renderManualTodos(){
   if(!container)return;
 
   if(!manualTodosState.length){
-    container.innerHTML="<div class='loading'>No manual tasks yet</div>";
+    container.innerHTML="<div class='loading'>No tasks yet</div>";
     return;
   }
 
@@ -53,7 +57,7 @@ function renderManualTodos(){
     const safeText=escapeTodoHtml(item.text);
     const checkedClass=item.checked?"is-checked":"";
     const checkedAttr=item.checked?"checked":"";
-    return `<label class="manual-todo-item ${checkedClass}">
+    return `<label class="manual-todo-item ${checkedClass}" data-todo-id="${item.id}">
       <input type="checkbox" data-todo-id="${item.id}" ${checkedAttr}>
       <span class="manual-todo-text">${safeText}</span>
     </label>`;
@@ -84,6 +88,88 @@ function toggleManualTodo(id, checked){
   renderManualTodos();
 }
 
+function deleteManualTodo(id){
+  manualTodosState=manualTodosState.filter(item=>item.id!==id);
+  writeManualTodos();
+  renderManualTodos();
+}
+
+function resetSwipeRow(row){
+  if(!row)return;
+  row.style.transform="";
+  row.classList.remove("is-swiping");
+}
+
+function handleSwipeStart(event, list){
+  const target=event.target;
+  if(!(target instanceof HTMLElement))return;
+  if(target.closest("input[type='checkbox']"))return;
+  const row=target.closest(".manual-todo-item");
+  if(!row||!(row instanceof HTMLElement)||!list.contains(row))return;
+
+  const touch=event.touches[0];
+  if(!touch)return;
+
+  resetSwipeRow(activeSwipe?.row);
+  activeSwipe={
+    row,
+    todoId:row.dataset.todoId||"",
+    startX:touch.clientX,
+    startY:touch.clientY,
+    lastX:touch.clientX,
+    hasHorizontalIntent:false
+  };
+}
+
+function handleSwipeMove(event){
+  if(!activeSwipe)return;
+  const touch=event.touches[0];
+  if(!touch)return;
+
+  const dx=touch.clientX-activeSwipe.startX;
+  const dy=touch.clientY-activeSwipe.startY;
+  activeSwipe.lastX=touch.clientX;
+
+  if(!activeSwipe.hasHorizontalIntent){
+    if(Math.abs(dx)<SWIPE_START_THRESHOLD&&Math.abs(dy)<SWIPE_START_THRESHOLD)return;
+    if(Math.abs(dy)>=Math.abs(dx)){
+      resetSwipeRow(activeSwipe.row);
+      activeSwipe=null;
+      return;
+    }
+    activeSwipe.hasHorizontalIntent=true;
+  }
+
+  if(dx>=0){
+    activeSwipe.row.style.transform="translateX(0)";
+    activeSwipe.row.classList.remove("is-swiping");
+    return;
+  }
+
+  event.preventDefault();
+  const translate=Math.max(dx,-SWIPE_MAX_TRANSLATE);
+  activeSwipe.row.style.transform=`translateX(${translate}px)`;
+  activeSwipe.row.classList.add("is-swiping");
+}
+
+function handleSwipeEnd(){
+  if(!activeSwipe)return;
+  const swipeDistance=activeSwipe.startX-activeSwipe.lastX;
+  const {row,todoId}=activeSwipe;
+  activeSwipe=null;
+
+  if(swipeDistance>=SWIPE_DELETE_THRESHOLD&&todoId){
+    row.style.transform=`translateX(-${SWIPE_MAX_TRANSLATE}px)`;
+    row.style.opacity="0";
+    setTimeout(()=>{
+      deleteManualTodo(todoId);
+    },120);
+    return;
+  }
+
+  resetSwipeRow(row);
+}
+
 function loadTodos(){
   if(manualTodoDomBound)return;
   manualTodoDomBound=true;
@@ -112,5 +198,18 @@ function loadTodos(){
       if(!id)return;
       toggleManualTodo(id,target.checked);
     });
+
+    list.addEventListener("touchstart",event=>{
+      handleSwipeStart(event,list);
+    },{passive:true});
+    list.addEventListener("touchmove",event=>{
+      handleSwipeMove(event);
+    },{passive:false});
+    list.addEventListener("touchend",()=>{
+      handleSwipeEnd();
+    },{passive:true});
+    list.addEventListener("touchcancel",()=>{
+      handleSwipeEnd();
+    },{passive:true});
   }
 }

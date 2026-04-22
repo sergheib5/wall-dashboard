@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Dashboard">
 <link rel="manifest" href="manifest.json?v=20260301">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260301">
+<link rel="stylesheet" href="css/style.css?v=20260422">
 <title>Wall Dashboard</title>
 </head>
 <body>
@@ -30,7 +30,8 @@
         >
         <button type="submit" class="manual-todo-add-btn">Add</button>
       </form>
-      <div id="manualTodosGrid"><div class="loading">No manual tasks yet</div></div>
+      <p class="todo-gesture-hint">Swipe left on a task to delete it.</p>
+      <div id="manualTodosGrid" class="manual-todos-grid"><div class="loading">No tasks yet</div></div>
     </section>
   </div>
 </div>
@@ -78,7 +79,7 @@
 <div class="vignette"></div>
 
 <script src="js/config.js?v=20260301"></script>
-<script src="js/todos.js?v=20260301"></script>
+<script src="js/todos.js?v=20260422"></script>
 <script src="js/weather.js?v=20260301"></script>
 <script src="js/photos.js?v=20260301"></script>
 <script src="js/quotes.js?v=20260301"></script>
