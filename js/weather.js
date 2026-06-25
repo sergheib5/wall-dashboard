@@ -170,6 +170,7 @@ function readCachedWeatherData(config){
       typeof parsed.current.wind!=="number"||
       typeof parsed.current.rainChance!=="number"||
       typeof parsed.current.condition!=="string"||
+      typeof parsed.current.windDirection!=="string"||
       parsed.forecast.length===0||
       parsed.forecast.some(day=>
         !day||
@@ -178,7 +179,8 @@ function readCachedWeatherData(config){
         typeof day.min!=="number"||
         typeof day.max!=="number"||
         typeof day.rainChance!=="number"||
-        typeof day.wind!=="number"
+        typeof day.wind!=="number"||
+        typeof day.windDirection!=="string"
       )
     ){
       return null;
@@ -207,21 +209,29 @@ function renderWeather(container, weatherData, units){
     <div class='forecast-card'>
       <div class='date'>${day.label}</div>
       <div class='icon'>${getWeatherIcon(day.code)}</div>
-      <div class='temp'><span class='temp-high'>${day.max}°</span><span class='temp-divider'>/</span><span class='temp-low'>${day.min}°</span></div>
-      <div class='detail'>${day.rainChance}% rain</div>
-      <div class='detail'>${day.wind} ${units.windLabel}</div>
+      <div class='temp-stack'>
+        <div class='temp-primary'>${day.max}°</div>
+        <div class='temp-secondary'>${day.min}°</div>
+      </div>
+      <div class='detail detail-rain'>${day.rainChance}%</div>
+      <div class='detail detail-wind'>${day.wind} ${units.windLabel}</div>
+      <div class='detail detail-direction'>${day.windDirection}</div>
     </div>
   `).join("");
 
   const stats=[
-    {label:"Feels like",value:`${weatherData.current.feelsLike}°`},
-    {label:"Humidity",value:`${weatherData.current.humidity}%`},
-    {label:"Rain",value:`${weatherData.current.rainChance}%`},
-    {label:"Wind",value:`${weatherData.current.wind} ${units.windLabel}`}
+    {label:"Wind",value:`${weatherData.current.wind} ${units.windLabel}`,meta:weatherData.current.windDirection,icon:getStatIconSvg("wind")},
+    {label:"Humidity",value:`${weatherData.current.humidity}%`,meta:"",icon:getStatIconSvg("humidity")},
+    {label:"Feels like",value:`${weatherData.current.feelsLike}°`,meta:"",icon:getStatIconSvg("feelsLike")},
+    {label:"Precip",value:`${weatherData.current.rainChance}%`,meta:"",icon:getStatIconSvg("precip")}
   ].map(stat=>`
     <div class='weather-stat'>
-      <div class='weather-stat-label'>${stat.label}</div>
-      <div class='weather-stat-value'>${stat.value}</div>
+      <div class='weather-stat-icon' aria-hidden="true">${stat.icon}</div>
+      <div class='weather-stat-content'>
+        <div class='weather-stat-label'>${stat.label}</div>
+        <div class='weather-stat-value'>${stat.value}</div>
+        ${stat.meta?`<div class='weather-stat-meta'>${stat.meta}</div>`:""}
+      </div>
     </div>
   `).join("");
 
@@ -232,9 +242,9 @@ function renderWeather(container, weatherData, units){
         <div class='weather-temp-block'>
           <div class='weather-temp'>${weatherData.current.temp}°</div>
           <div class='weather-desc'>${weatherData.current.condition}</div>
+          <div class='weather-location'>${weatherData.location.label}</div>
         </div>
       </div>
-      <div class='weather-location'>${weatherData.location.label}</div>
     </div>
     <div class='weather-stats'>${stats}</div>
     <div class='weather-forecast'>${forecastHtml}</div>`;
@@ -264,6 +274,46 @@ function getWeatherLabel(code){
   return "Mild";
 }
 
+function getStatIconSvg(kind){
+  if(kind==="wind"){
+    return `
+      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-wind">
+        <path d="M5 12h13c2.8 0 4.2-1.1 4.2-3.3S20.8 5 18.6 5c-1.6 0-2.9.7-3.8 2.1" />
+        <path d="M5 18h18.5c2.3 0 3.5.9 3.5 2.8S25.7 24 23.8 24c-1.3 0-2.5-.6-3.3-1.8" />
+        <path d="M5 24h10.5" />
+      </svg>`;
+  }
+  if(kind==="humidity"){
+    return `
+      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-humidity">
+        <path d="M16 4c4.5 6 8 10 8 15.2A8 8 0 1 1 8 19.2C8 14 11.5 10 16 4Z" />
+        <path d="M12.3 20.2c.7 1.8 2.1 2.7 4.2 2.7 1.8 0 3.1-.7 4-2.1" />
+      </svg>`;
+  }
+  if(kind==="feelsLike"){
+    return `
+      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-feels">
+        <path d="M14 7a2 2 0 1 1 4 0v10.1a5.5 5.5 0 1 1-4 0Z" />
+        <path d="M16 10v9.2" />
+        <path d="M16 21.4a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z" />
+      </svg>`;
+  }
+  return `
+    <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-precip">
+      <path d="M10 14.5a6 6 0 0 1 11.4-2A4.8 4.8 0 1 1 22 22H11.2A4.2 4.2 0 0 1 10 14.5Z" />
+      <path d="M12 24.5l-1.2 3.5" />
+      <path d="M17 24.5l-1.2 3.5" />
+      <path d="M22 24.5l-1.2 3.5" />
+    </svg>`;
+}
+
+function getWindDirectionLabel(degrees){
+  const normalized=((Number(degrees)||0)%360+360)%360;
+  const directions=["N","NE","E","SE","S","SW","W","NW"];
+  const index=Math.round(normalized/45)%8;
+  return directions[index];
+}
+
 async function loadWeather(){
   const c=document.getElementById("weatherContainer");
   if(!c)return;
@@ -273,7 +323,7 @@ async function loadWeather(){
 
   try{
     const location=await resolveWeatherLocation();
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(location.latitude)}&longitude=${encodeURIComponent(location.longitude)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&timezone=${encodeURIComponent(location.timeZone)}&temperature_unit=${encodeURIComponent(units.temperature)}&wind_speed_unit=${encodeURIComponent(units.windSpeed)}`;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(location.latitude)}&longitude=${encodeURIComponent(location.longitude)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=${encodeURIComponent(location.timeZone)}&temperature_unit=${encodeURIComponent(units.temperature)}&wind_speed_unit=${encodeURIComponent(units.windSpeed)}`;
     const res=await fetch(url);
     if(!res.ok){
       throw new Error(`Weather lookup failed with status ${res.status}`);
@@ -293,6 +343,7 @@ async function loadWeather(){
     const codes=data.daily.weather_code;
     const rainChances=data.daily.precipitation_probability_max;
     const dailyWinds=data.daily.wind_speed_10m_max;
+    const dailyWindDirections=data.daily.wind_direction_10m_dominant;
 
     // Get today's date in the resolved timezone (YYYY-MM-DD format)
     const now=new Date();
@@ -325,7 +376,8 @@ async function loadWeather(){
       min:todayMin,
       max:todayMax,
       rainChance:Math.round(rainChances[todayIndex]??0),
-      wind:Math.round(dailyWinds[todayIndex]??0)
+      wind:Math.round(dailyWinds[todayIndex]??0),
+      windDirection:getWindDirectionLabel(dailyWindDirections[todayIndex]??current.wind_direction_10m)
     });
     
     // Next 3 days forecast (starting from todayIndex+1)
@@ -341,7 +393,8 @@ async function loadWeather(){
         min,
         max,
         rainChance:Math.round(rainChances[i]??0),
-        wind:Math.round(dailyWinds[i]??0)
+        wind:Math.round(dailyWinds[i]??0),
+        windDirection:getWindDirectionLabel(dailyWindDirections[i]??0)
       });
     }
 
@@ -357,7 +410,8 @@ async function loadWeather(){
         humidity:Math.round(current.relative_humidity_2m??0),
         wind:Math.round(current.wind_speed_10m??0),
         rainChance:Math.round(rainChances[todayIndex]??0),
-        condition:getWeatherLabel(Number(current.weather_code??0))
+        condition:getWeatherLabel(Number(current.weather_code??0)),
+        windDirection:getWindDirectionLabel(current.wind_direction_10m??0)
       },
       forecast
     };
