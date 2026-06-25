@@ -192,7 +192,7 @@ async function fetchJSON(url){
 }
 
 // INIT
-loadTodos();loadWeather();
+loadWeather();
 // Wait for photos to load, then show first photo if photos slide is initially active
 (async()=>{
   if(typeof initPhotos==="function")await initPhotos();
