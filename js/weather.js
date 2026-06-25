@@ -163,7 +163,23 @@ function readCachedWeatherData(config){
       !parsed||
       !parsed.location||
       !Array.isArray(parsed.forecast)||
-      !parsed.current
+      !parsed.current||
+      typeof parsed.current.temp!=="number"||
+      typeof parsed.current.feelsLike!=="number"||
+      typeof parsed.current.humidity!=="number"||
+      typeof parsed.current.wind!=="number"||
+      typeof parsed.current.rainChance!=="number"||
+      typeof parsed.current.condition!=="string"||
+      parsed.forecast.length===0||
+      parsed.forecast.some(day=>
+        !day||
+        typeof day.label!=="string"||
+        typeof day.code!=="number"||
+        typeof day.min!=="number"||
+        typeof day.max!=="number"||
+        typeof day.rainChance!=="number"||
+        typeof day.wind!=="number"
+      )
     ){
       return null;
     }
@@ -191,17 +207,36 @@ function renderWeather(container, weatherData, units){
     <div class='forecast-card'>
       <div class='date'>${day.label}</div>
       <div class='icon'>${getWeatherIcon(day.code)}</div>
-      <div class='temp'>${day.min}° / ${day.max}°</div>
+      <div class='temp'><span class='temp-high'>${day.max}°</span><span class='temp-divider'>/</span><span class='temp-low'>${day.min}°</span></div>
+      <div class='detail'>${day.rainChance}% rain</div>
+      <div class='detail'>${day.wind} ${units.windLabel}</div>
+    </div>
+  `).join("");
+
+  const stats=[
+    {label:"Feels like",value:`${weatherData.current.feelsLike}°`},
+    {label:"Humidity",value:`${weatherData.current.humidity}%`},
+    {label:"Rain",value:`${weatherData.current.rainChance}%`},
+    {label:"Wind",value:`${weatherData.current.wind} ${units.windLabel}`}
+  ].map(stat=>`
+    <div class='weather-stat'>
+      <div class='weather-stat-label'>${stat.label}</div>
+      <div class='weather-stat-value'>${stat.value}</div>
     </div>
   `).join("");
 
   container.innerHTML=`
-    <div class='weather-main'>
-      <div class='weather-icon'>${getWeatherIcon(weatherData.current.code)}</div>
-      <div class='weather-temp'>${weatherData.current.temp}°</div>
+    <div class='weather-hero'>
+      <div class='weather-main'>
+        <div class='weather-icon'>${getWeatherIcon(weatherData.current.code)}</div>
+        <div class='weather-temp-block'>
+          <div class='weather-temp'>${weatherData.current.temp}°</div>
+          <div class='weather-desc'>${weatherData.current.condition}</div>
+        </div>
+      </div>
+      <div class='weather-location'>${weatherData.location.label}</div>
     </div>
-    <div class='weather-desc'>${weatherData.current.wind} ${units.windLabel} wind</div>
-    <div class='weather-location'>${weatherData.location.label}</div>
+    <div class='weather-stats'>${stats}</div>
     <div class='weather-forecast'>${forecastHtml}</div>`;
 }
 
@@ -217,6 +252,18 @@ function getWeatherIcon(code){
   return "🌤️";
 }
 
+function getWeatherLabel(code){
+  if(code===0) return "Clear";
+  if([1,2].includes(code)) return "Partly cloudy";
+  if(code===3) return "Cloudy";
+  if([45,48].includes(code)) return "Fog";
+  if([51,53,55,56,57].includes(code)) return "Drizzle";
+  if([61,63,65,80,81,82].includes(code)) return "Rain";
+  if([66,67,71,73,75,77,85,86].includes(code)) return "Snow";
+  if([95,96,99].includes(code)) return "Storms";
+  return "Mild";
+}
+
 async function loadWeather(){
   const c=document.getElementById("weatherContainer");
   if(!c)return;
@@ -226,7 +273,7 @@ async function loadWeather(){
 
   try{
     const location=await resolveWeatherLocation();
-    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(location.latitude)}&longitude=${encodeURIComponent(location.longitude)}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=${encodeURIComponent(location.timeZone)}&temperature_unit=${encodeURIComponent(units.temperature)}&wind_speed_unit=${encodeURIComponent(units.windSpeed)}`;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(location.latitude)}&longitude=${encodeURIComponent(location.longitude)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max&timezone=${encodeURIComponent(location.timeZone)}&temperature_unit=${encodeURIComponent(units.temperature)}&wind_speed_unit=${encodeURIComponent(units.windSpeed)}`;
     const res=await fetch(url);
     if(!res.ok){
       throw new Error(`Weather lookup failed with status ${res.status}`);
@@ -234,16 +281,18 @@ async function loadWeather(){
     const data=await res.json();
 
     // Validate response structure
-    if(!data.current_weather||!data.daily){
+    if(!data.current||!data.daily){
       throw new Error("Invalid weather data");
     }
 
     // current conditions
-    const current=data.current_weather;
+    const current=data.current;
     const days=data.daily.time;
     const minT=data.daily.temperature_2m_min;
     const maxT=data.daily.temperature_2m_max;
-    const codes=data.daily.weathercode;
+    const codes=data.daily.weather_code;
+    const rainChances=data.daily.precipitation_probability_max;
+    const dailyWinds=data.daily.wind_speed_10m_max;
 
     // Get today's date in the resolved timezone (YYYY-MM-DD format)
     const now=new Date();
@@ -274,21 +323,25 @@ async function loadWeather(){
       label:"Today",
       code:todayCode,
       min:todayMin,
-      max:todayMax
+      max:todayMax,
+      rainChance:Math.round(rainChances[todayIndex]??0),
+      wind:Math.round(dailyWinds[todayIndex]??0)
     });
     
-    // Next 2 days forecast (starting from todayIndex+1)
-    for(let i=todayIndex+1;i<=todayIndex+2 && i<days.length;i++){
+    // Next 3 days forecast (starting from todayIndex+1)
+    for(let i=todayIndex+1;i<=todayIndex+3 && i<days.length;i++){
       const date=new Date(days[i]+"T12:00:00"); // Add time to avoid timezone shifts
       const label=date.toLocaleDateString("en-US",{weekday:"short",timeZone:location.timeZone});
-      const code=codes[i]??0;
+      const code=Number(codes[i]??0);
       const min=Math.round(minT[i]??0);
       const max=Math.round(maxT[i]??0);
       forecast.push({
         label,
         code,
         min,
-        max
+        max,
+        rainChance:Math.round(rainChances[i]??0),
+        wind:Math.round(dailyWinds[i]??0)
       });
     }
 
@@ -298,9 +351,13 @@ async function loadWeather(){
         timeZone:location.timeZone
       },
       current:{
-        code:current.weathercode??0,
-        temp:Math.round(current.temperature??0),
-        wind:Math.round(current.windspeed??0)
+        code:Number(current.weather_code??0),
+        temp:Math.round(current.temperature_2m??0),
+        feelsLike:Math.round(current.apparent_temperature??0),
+        humidity:Math.round(current.relative_humidity_2m??0),
+        wind:Math.round(current.wind_speed_10m??0),
+        rainChance:Math.round(rainChances[todayIndex]??0),
+        condition:getWeatherLabel(Number(current.weather_code??0))
       },
       forecast
     };
