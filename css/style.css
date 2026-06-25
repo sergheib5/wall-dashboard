@@ -47,48 +47,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
   overflow:auto;
   padding-right:.25rem;
 }
-.manual-todo-form{
-  display:flex;
-  gap:.7rem;
-  margin:0 0 1.3rem;
-}
-.todo-gesture-hint{
-  margin:.15rem 0 1rem;
-  color:rgba(255,255,255,.5);
-  font-size:1rem;
-  letter-spacing:.01em;
-}
-.manual-todo-input{
-  flex:1;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.23);
-  background:rgba(8,12,18,.55);
-  color:var(--text);
-  padding:1rem 1.1rem;
-  font-size:1.3rem;
-  outline:none;
-}
-.manual-todo-input::placeholder{
-  color:rgba(255,255,255,.45);
-}
-.manual-todo-input:focus{
-  border-color:rgba(255,255,255,.52);
-  box-shadow:0 0 0 3px rgba(255,255,255,.08);
-}
-.manual-todo-add-btn{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.28);
-  background:linear-gradient(165deg,rgba(34,197,94,.4),rgba(34,197,94,.25));
-  color:rgba(255,255,255,.95);
-  font-size:1.15rem;
-  font-weight:700;
-  letter-spacing:.01em;
-  padding:1rem 1.25rem;
-  cursor:pointer;
-}
-.manual-todo-add-btn:hover{
-  filter:brightness(1.14);
-}
 .manual-todo-item{
   display:flex;
   align-items:center;
@@ -262,17 +220,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
     padding:1.2rem;
   }
   .todo-section-title{font-size:1.6rem}
-  .todo-gesture-hint{
-    font-size:.9rem;
-  }
-  .manual-todo-input{
-    font-size:1.08rem;
-    padding:.82rem .95rem;
-  }
-  .manual-todo-add-btn{
-    font-size:1rem;
-    padding:.8rem .95rem;
-  }
   .manual-todo-text{
     font-size:1.14rem;
   }
