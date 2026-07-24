@@ -2,7 +2,7 @@ let photos=[];
 let photoIndex=0;
 let photosLoaded=false;
 let photosInitPromise=null;
-const FALLBACK_PHOTOS=['data/IMG_0258.jpg','data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_5305.jpg','data/IMG_9133.jpeg','data/IMG_9134.jpg'];
+const FALLBACK_PHOTOS=['data/IMG_0258.jpg','data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_5305.jpg','data/IMG_9133.jpeg','data/IMG_9134.jpg','data/Photo-1.jpg'];
 
 function useFallbackPhotos(){
   photos=[...FALLBACK_PHOTOS];
