@@ -2,88 +2,98 @@ let photos=[];
 let photoIndex=0;
 let photosLoaded=false;
 let photosInitPromise=null;
+let rotationTimer=null;
+let photoRequest=0;
 const FALLBACK_PHOTOS=['data/IMG_0258.jpg','data/IMG_1180.jpeg','data/IMG_3441.jpeg','data/IMG_4804.JPG','data/IMG_5053.jpeg','data/IMG_5305.jpg','data/IMG_9133.jpeg','data/IMG_9134.jpg','data/Photo-1.jpg'];
 
-function useFallbackPhotos(){
-  photos=[...FALLBACK_PHOTOS];
-  photosLoaded=true;
-  return photos;
-}
+function useFallbackPhotos(){photos=[...FALLBACK_PHOTOS];photosLoaded=true;return photos;}
 
-// Dynamically load photos from photos.json
 async function initPhotos(){
   if(photosLoaded)return photos;
   if(photosInitPromise)return await photosInitPromise;
-
   photosInitPromise=(async()=>{
     try{
-      // Add cache busting to ensure we get the latest photos.json
-      const cacheBuster='?v='+Date.now();
-      const response=await fetch('data/photos.json'+cacheBuster);
-      if(!response.ok){
-        console.warn('Could not load photos.json, using fallback');
-        return useFallbackPhotos();
-      }
+      const response=await fetch('data/photos.json?v='+Date.now());
+      if(!response.ok)return useFallbackPhotos();
       const nextPhotos=await response.json();
-      if(!Array.isArray(nextPhotos)||nextPhotos.length===0){
-        console.warn('No photos found in photos.json');
-        photos=[];
-        photosLoaded=true;
-        return photos;
-      }
-      photos=nextPhotos;
+      if(!Array.isArray(nextPhotos)||nextPhotos.length===0){photos=[];photosLoaded=true;return photos;}
+      photos=nextPhotos.filter(item=>typeof item==='string'&&item.trim());
       photosLoaded=true;
-      console.log(`Loaded ${photos.length} photos`,photos);
       return photos;
-    }catch(err){
-      console.error('Error loading photos:',err);
-      return useFallbackPhotos();
-    }finally{
-      photosInitPromise=null;
-    }
+    }catch(error){console.error('Error loading photos:',error);return useFallbackPhotos();}
+    finally{photosInitPromise=null;}
   })();
-
   return await photosInitPromise;
 }
 
-let photoLoadTimeout = null;
-
-function loadPhoto(){
-  const el=document.getElementById("photoFrame");
-  if(!el)return;
-  
-  // Clear any pending timeout to prevent pile-up
-  if(photoLoadTimeout){
-    clearTimeout(photoLoadTimeout);
-    photoLoadTimeout=null;
-  }
-  
-  // Wait for photos to load
-  if(!photosLoaded){
-    console.log('Photos not loaded yet, waiting...');
-    photoLoadTimeout=setTimeout(loadPhoto,100);
-    return;
-  }
-  if(photos.length===0){
-    el.removeAttribute('src');
-    return;
-  }
-  
-  // Fade out current photo
-  el.style.opacity='0';
-  
-  // After fade out, change image and fade in
-  setTimeout(()=>{
-    el.src=photos[photoIndex];
-    console.log(`Showing photo ${photoIndex+1}/${photos.length}: ${photos[photoIndex]}`);
-    
-    // Wait for image to load, then fade in
-    el.onload=()=>{
-      el.style.opacity='1';
-    };
-    
-    // Advance to next photo for next time photos slide appears
-    // This ensures we don't repeat until all photos shown
-    photoIndex=(photoIndex+1)%photos.length;
-  },250);
+function updatePhotoStatus(isPlaying){
+  const button=document.getElementById('photoToggle');
+  if(!button)return;
+  button.setAttribute('aria-pressed',String(isPlaying));
+  button.setAttribute('aria-label',isPlaying?'Pause automatic photo changes':'Resume automatic photo changes');
+  button.innerHTML=`<span class="material-symbols-outlined" aria-hidden="true">${isPlaying?'pause':'play_arrow'}</span>`;
 }
+
+async function loadPhoto(){
+  if(!photosLoaded)await initPhotos();
+  const request=++photoRequest;
+  const today=document.getElementById('todayPhoto');
+  const detail=document.getElementById('photoFrame');
+  if(!photos.length)return;
+  for(let attempt=0;attempt<photos.length;attempt++){
+    const index=(photoIndex+attempt)%photos.length;
+    const image=new Image();
+    try{
+      await new Promise((resolve,reject)=>{
+        image.onload=resolve;
+        image.onerror=()=>reject(new Error(`Could not load photo: ${photos[index]}`));
+        image.src=photos[index];
+        if(image.complete&&image.naturalWidth)resolve();
+      });
+      if(request!==photoRequest)return;
+      const nextSrc=photos[index];
+      for(const [current,next] of [
+        [today,document.getElementById('todayPhotoNext')],
+        [detail,document.getElementById('photoFrameNext')]
+      ]){
+        if(!current||!next)continue;
+        const active=current.classList.contains('is-visible')?current:next;
+        const incoming=active===current?next:current;
+        if(active.src===image.src)continue;
+        let activated=false;
+        const activate=()=>{
+          if(activated)return;
+          activated=true;
+          requestAnimationFrame(()=>{
+            incoming.classList.add('is-visible');
+            active.classList.remove('is-visible');
+            incoming.alt='Family photo';
+            incoming.removeAttribute('aria-hidden');
+            active.alt='';
+            active.setAttribute('aria-hidden','true');
+          });
+        };
+        incoming.onload=activate;
+        incoming.src=nextSrc;
+        if(incoming.complete&&incoming.naturalWidth)activate();
+      }
+      photoIndex=(index+1)%photos.length;
+      return;
+    }catch(error){console.warn(error.message);}
+  }
+}
+
+function startPhotoRotation(intervalMs){
+  if(rotationTimer)clearInterval(rotationTimer);
+  const delay=Math.max(30000,Number(intervalMs)||240000);
+  rotationTimer=setInterval(()=>{if(!document.hidden)loadPhoto();},delay);
+  updatePhotoStatus(true);
+}
+
+function togglePhotoRotation(shouldPlay){
+  if(shouldPlay)startPhotoRotation(window.DASHBOARD_CONFIG?.photoRotationMs);
+  else if(rotationTimer){clearInterval(rotationTimer);rotationTimer=null;updatePhotoStatus(false);}
+}
+
+window.startPhotoRotation=startPhotoRotation;
+window.togglePhotoRotation=togglePhotoRotation;

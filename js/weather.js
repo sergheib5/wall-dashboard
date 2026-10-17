@@ -6,6 +6,14 @@ const WEATHER_DATA_CACHE_PREFIX="wall-dashboard-weather-data:";
 let resolvedWeatherLocation=null;
 let weatherLocationPromise=null;
 
+function nullableRounded(value){
+  return Number.isFinite(value)?Math.round(value):null;
+}
+
+function nullableDirection(degrees){
+  return Number.isFinite(degrees)?getWindDirectionLabel(degrees):"";
+}
+
 function getWeatherConfig(){
   if(window.DASHBOARD_CONFIG?.weather){
     return window.DASHBOARD_CONFIG.weather;
@@ -159,27 +167,28 @@ function readCachedWeatherData(config){
     const raw=localStorage.getItem(getWeatherDataCacheKey(config));
     if(!raw)return null;
     const parsed=JSON.parse(raw);
+    const isNullableNumber=value=>value===null||Number.isFinite(value);
     if(
       !parsed||
       !parsed.location||
       !Array.isArray(parsed.forecast)||
       !parsed.current||
-      typeof parsed.current.temp!=="number"||
-      typeof parsed.current.feelsLike!=="number"||
-      typeof parsed.current.humidity!=="number"||
-      typeof parsed.current.wind!=="number"||
-      typeof parsed.current.rainChance!=="number"||
+      !isNullableNumber(parsed.current.temp)||
+      !isNullableNumber(parsed.current.feelsLike)||
+      !isNullableNumber(parsed.current.humidity)||
+      !isNullableNumber(parsed.current.wind)||
+      !isNullableNumber(parsed.current.rainChance)||
       typeof parsed.current.condition!=="string"||
       typeof parsed.current.windDirection!=="string"||
       parsed.forecast.length===0||
       parsed.forecast.some(day=>
         !day||
         typeof day.label!=="string"||
-        typeof day.code!=="number"||
-        typeof day.min!=="number"||
-        typeof day.max!=="number"||
-        typeof day.rainChance!=="number"||
-        typeof day.wind!=="number"||
+        !isNullableNumber(day.code)||
+        !isNullableNumber(day.min)||
+        !isNullableNumber(day.max)||
+        !isNullableNumber(day.rainChance)||
+        !isNullableNumber(day.wind)||
         typeof day.windDirection!=="string"
       )
     ){
@@ -194,75 +203,133 @@ function readCachedWeatherData(config){
 
 function writeCachedWeatherData(config, weatherData){
   try{
+    weatherData.fetchedAt=Date.now();
     localStorage.setItem(getWeatherDataCacheKey(config),JSON.stringify(weatherData));
   }catch(err){
     console.warn("Unable to cache weather",err);
   }
 }
 
-function renderWeather(container, weatherData, units){
-  if(!container||!weatherData)return;
-
-  window.dashboardTimeZone=weatherData.location.timeZone;
-
-  const forecastHtml=weatherData.forecast.map(day=>`
-    <div class='forecast-card'>
-      <div class='date'>${day.label}</div>
-      <div class='icon'>${getWeatherIcon(day.code)}</div>
-      <div class='temp-stack'>
-        <div class='temp-primary'>${day.max}°</div>
-        <div class='temp-secondary'>${day.min}°</div>
-      </div>
-      <div class='detail detail-rain'>${day.rainChance}%</div>
-      <div class='detail detail-wind'>${day.wind} ${units.windLabel}</div>
-      <div class='detail detail-direction'>${day.windDirection}</div>
-    </div>
-  `).join("");
-
-  const stats=[
-    {label:"Wind",value:`${weatherData.current.wind} ${units.windLabel}`,meta:weatherData.current.windDirection,icon:getStatIconSvg("wind")},
-    {label:"Humidity",value:`${weatherData.current.humidity}%`,meta:"",icon:getStatIconSvg("humidity")},
-    {label:"Feels like",value:`${weatherData.current.feelsLike}°`,meta:"",icon:getStatIconSvg("feelsLike")},
-    {label:"Precip",value:`${weatherData.current.rainChance}%`,meta:"",icon:getStatIconSvg("precip")}
-  ].map(stat=>`
-    <div class='weather-stat'>
-      <div class='weather-stat-icon' aria-hidden="true">${stat.icon}</div>
-      <div class='weather-stat-content'>
-        <div class='weather-stat-label'>${stat.label}</div>
-        <div class='weather-stat-value'>${stat.value}</div>
-        ${stat.meta?`<div class='weather-stat-meta'>${stat.meta}</div>`:""}
-      </div>
-    </div>
-  `).join("");
-
-  container.innerHTML=`
-    <div class='weather-hero'>
-      <div class='weather-main'>
-        <div class='weather-icon'>${getWeatherIcon(weatherData.current.code)}</div>
-        <div class='weather-temp-block'>
-          <div class='weather-temp'>${weatherData.current.temp}°</div>
-          <div class='weather-desc'>${weatherData.current.condition}</div>
-          <div class='weather-location'>${weatherData.location.label}</div>
-        </div>
-      </div>
-    </div>
-    <div class='weather-stats'>${stats}</div>
-    <div class='weather-forecast'>${forecastHtml}</div>`;
+function getWeatherIconName(code){
+  if(!Number.isFinite(code))return "question_mark";
+  if(code===0)return "sunny";
+  if([1,2].includes(code))return "partly_cloudy_day";
+  if(code===3)return "cloud";
+  if([45,48].includes(code))return "foggy";
+  if([51,53,55,56,57].includes(code))return "rainy";
+  if([61,63,65,80,81,82].includes(code))return "rainy";
+  if([66,67,71,73,75,77,85,86].includes(code))return "weather_snowy";
+  if([95,96,99].includes(code))return "thunderstorm";
+  return "partly_cloudy_day";
 }
 
-function getWeatherIcon(code){
-  if([0].includes(code)) return "☀️";
-  if([1,2].includes(code)) return "🌤️";
-  if([3].includes(code)) return "☁️";
-  if([45,48].includes(code)) return "🌫️";
-  if([51,53,55,56,57].includes(code)) return "🌦️";
-  if([61,63,65,80,81,82].includes(code)) return "🌧️";
-  if([66,67,71,73,75,77,85,86].includes(code)) return "❄️";
-  if([95,96,99].includes(code)) return "⛈️";
-  return "🌤️";
+function weatherIcon(code, extraClass=""){
+  return `<span class="material-symbols-outlined ${extraClass}" aria-hidden="true">${getWeatherIconName(code)}</span>`;
+}
+
+function displayNumber(value, suffix=""){
+  return Number.isFinite(value)?`${Math.round(value)}${suffix}`:"—";
+}
+
+function getTemperatureSymbol(units){
+  return units.temperature==="celsius"?"°C":"°F";
+}
+
+function formatUpdatedAt(timestamp, timeZone){
+  if(!Number.isFinite(timestamp))return "Update time unavailable";
+  return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone}).format(new Date(timestamp));
+}
+
+function isStaleWeather(weatherData){
+  if(!Number.isFinite(weatherData.fetchedAt))return true;
+  const age=Date.now()-weatherData.fetchedAt;
+  if(age>30*60*1000)return true;
+  const dateFormatter=new Intl.DateTimeFormat("en-CA",{timeZone:weatherData.location.timeZone});
+  return dateFormatter.format(new Date(weatherData.fetchedAt))!==dateFormatter.format(new Date());
+}
+
+function getForecastRange(day, minAcross, maxAcross){
+  if(!Number.isFinite(day.min)||!Number.isFinite(day.max))return {left:0,width:0};
+  const span=maxAcross-minAcross;
+  if(span<=0)return {left:0,width:100};
+  return {left:Math.max(0,((day.min-minAcross)/span)*100),width:Math.max(2,((day.max-day.min)/span)*100)};
+}
+
+function renderTodayForecast(forecast, units, currentTemperature){
+  const target=document.getElementById("todayForecast");
+  if(!target)return;
+  if(!forecast?.length){target.innerHTML="<div class='loading'>Forecast unavailable</div>";return;}
+  const allTemps=forecast.flatMap(day=>[day.min,day.max]).filter(Number.isFinite);
+  const minAcross=allTemps.length?Math.min(...allTemps):0;
+  const maxAcross=allTemps.length?Math.max(...allTemps):0;
+  target.innerHTML=forecast.slice(0,4).map((day,index)=>{
+    const range=getForecastRange(day,minAcross,maxAcross);
+    return `<article class="forecast-day${index===0?" is-today":""}">
+      <span class="forecast-day-name">${day.label}</span>
+      ${weatherIcon(day.code,"forecast-icon")}
+      ${index===0&&currentTemperature?`<div class="forecast-current" aria-label="Current temperature ${currentTemperature}"><span class="forecast-current-label">Now</span><strong class="forecast-current-temp">${currentTemperature}</strong></div>`:""}
+      <div class="forecast-temps" aria-label="Low ${displayNumber(day.min,units.temperature==="celsius"?"°C":"°F")}, high ${displayNumber(day.max,units.temperature==="celsius"?"°C":"°F")}">
+        <div class="forecast-numbers"><span>${displayNumber(day.min,units.temperature==="celsius"?"°":"°")}</span><span>${displayNumber(day.max,units.temperature==="celsius"?"°":"°")}</span></div>
+        <div class="forecast-range" aria-hidden="true"><span style="left:${range.left.toFixed(2)}%;width:${range.width.toFixed(2)}%"></span></div>
+      </div>
+      <span class="forecast-rain">Rain chance<strong>${displayNumber(day.rainChance,"%")}</strong></span>
+    </article>`;
+  }).join("");
+}
+
+function renderWeather(container, weatherData, units){
+  if(!weatherData)return;
+  const {current,location,forecast}=weatherData;
+  const symbol=getTemperatureSymbol(units);
+  const stale=isStaleWeather(weatherData);
+  const updated=formatUpdatedAt(weatherData.fetchedAt,location.timeZone);
+  window.dashboardTimeZone=location.timeZone;
+
+  renderTodayForecast(forecast,units,`${displayNumber(current.temp)}${symbol}`);
+  const forecasts=forecast.slice(0,4);
+  const allTemps=forecasts.flatMap(day=>[day.min,day.max]).filter(Number.isFinite);
+  const minAcross=allTemps.length?Math.min(...allTemps):0;
+  const maxAcross=allTemps.length?Math.max(...allTemps):0;
+  const forecastHtml=forecasts.map(day=>{
+    const range=getForecastRange(day,minAcross,maxAcross);
+    return `<article class="forecast-card">
+      <div class="date">${day.label}</div>
+      <div class="icon">${weatherIcon(day.code,"forecast-icon")}</div>
+      <div class="temp-stack"><span class="temp-primary">High ${displayNumber(day.max,symbol)}</span><span class="temp-secondary">Low ${displayNumber(day.min,symbol)}</span></div>
+      <div class="forecast-range" aria-label="Temperature range"><span style="left:${range.left.toFixed(2)}%;width:${range.width.toFixed(2)}%"></span></div>
+      <div class="detail">Rain chance today: ${displayNumber(day.rainChance,"%")}</div>
+      <div class="detail">Wind ${displayNumber(day.wind)} ${units.windLabel} ${day.windDirection||""}</div>
+    </article>`;
+  }).join("");
+  const stats=[
+    {label:"Wind",value:`${displayNumber(current.wind)} ${units.windLabel}`,meta:current.windDirection,icon:"air"},
+    {label:"Humidity",value:displayNumber(current.humidity,"%"),meta:"",icon:"humidity_percentage"},
+    {label:"Feels like",value:displayNumber(current.feelsLike,symbol),meta:"",icon:"device_thermostat"},
+    {label:"Rain chance today",value:displayNumber(current.rainChance,"%"),meta:"Daily forecast maximum",icon:"rainy"}
+  ].map(stat=>`<div class="weather-stat"><span class="material-symbols-outlined" aria-hidden="true">${stat.icon}</span><div class="weather-stat-label">${stat.label}</div><div class="weather-stat-value">${stat.value}</div>${stat.meta?`<div class="weather-stat-meta">${stat.meta}</div>`:""}</div>`).join("");
+
+  if(container){
+    container.innerHTML=`<div class="weather-summary">${weatherIcon(current.code,"weather-summary-icon")}<div><div class="weather-summary-temp">${displayNumber(current.temp)}${symbol}</div><div class="weather-summary-condition">${current.condition}</div><div class="weather-location">${location.label}</div></div></div>
+      <div class="weather-stats">${stats}</div>
+      <div class="weather-forecast">${forecastHtml}</div>
+      <p class="weather-status ${stale?"is-stale":""}" role="status">${stale?"Offline or unable to refresh · ":""}Last successful update ${updated}</p>`;
+  }
+  const updatedDetail=document.getElementById("weatherUpdatedDetail");
+  if(updatedDetail)updatedDetail.textContent=`${stale?"Offline · last successful update":"Updated"} ${updated}`;
+}
+
+function showWeatherUnavailable(){
+  const forecast=document.getElementById("todayForecast");
+  if(forecast)forecast.innerHTML="<div class='loading'>Forecast unavailable</div>";
+  const container=document.getElementById("weatherContainer");
+  if(container){
+    container.innerHTML="<div class='loading'>Weather is unavailable right now.</div><button class='retry-button' id='retryWeatherButton'>Try again</button>";
+    document.getElementById("retryWeatherButton").addEventListener("click",()=>loadWeather());
+  }
 }
 
 function getWeatherLabel(code){
+  if(!Number.isFinite(code))return "Conditions unavailable";
   if(code===0) return "Clear";
   if([1,2].includes(code)) return "Partly cloudy";
   if(code===3) return "Cloudy";
@@ -271,44 +338,12 @@ function getWeatherLabel(code){
   if([61,63,65,80,81,82].includes(code)) return "Rain";
   if([66,67,71,73,75,77,85,86].includes(code)) return "Snow";
   if([95,96,99].includes(code)) return "Storms";
-  return "Mild";
-}
-
-function getStatIconSvg(kind){
-  if(kind==="wind"){
-    return `
-      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-wind">
-        <path d="M5 12h13c2.8 0 4.2-1.1 4.2-3.3S20.8 5 18.6 5c-1.6 0-2.9.7-3.8 2.1" />
-        <path d="M5 18h18.5c2.3 0 3.5.9 3.5 2.8S25.7 24 23.8 24c-1.3 0-2.5-.6-3.3-1.8" />
-        <path d="M5 24h10.5" />
-      </svg>`;
-  }
-  if(kind==="humidity"){
-    return `
-      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-humidity">
-        <path d="M16 4c4.5 6 8 10 8 15.2A8 8 0 1 1 8 19.2C8 14 11.5 10 16 4Z" />
-        <path d="M12.3 20.2c.7 1.8 2.1 2.7 4.2 2.7 1.8 0 3.1-.7 4-2.1" />
-      </svg>`;
-  }
-  if(kind==="feelsLike"){
-    return `
-      <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-feels">
-        <path d="M14 7a2 2 0 1 1 4 0v10.1a5.5 5.5 0 1 1-4 0Z" />
-        <path d="M16 10v9.2" />
-        <path d="M16 21.4a1.8 1.8 0 1 0 0 3.6 1.8 1.8 0 0 0 0-3.6Z" />
-      </svg>`;
-  }
-  return `
-    <svg viewBox="0 0 32 32" class="stat-icon-svg stat-icon-precip">
-      <path d="M10 14.5a6 6 0 0 1 11.4-2A4.8 4.8 0 1 1 22 22H11.2A4.2 4.2 0 0 1 10 14.5Z" />
-      <path d="M12 24.5l-1.2 3.5" />
-      <path d="M17 24.5l-1.2 3.5" />
-      <path d="M22 24.5l-1.2 3.5" />
-    </svg>`;
+  return "Conditions unavailable";
 }
 
 function getWindDirectionLabel(degrees){
-  const normalized=((Number(degrees)||0)%360+360)%360;
+  if(!Number.isFinite(degrees))return "";
+  const normalized=((degrees%360)+360)%360;
   const directions=["N","NE","E","SE","S","SW","W","NW"];
   const index=Math.round(normalized/45)%8;
   return directions[index];
@@ -337,7 +372,7 @@ async function loadWeather(){
 
     // current conditions
     const current=data.current;
-    const days=data.daily.time;
+    const days=data.daily.time||[];
     const minT=data.daily.temperature_2m_min;
     const maxT=data.daily.temperature_2m_max;
     const codes=data.daily.weather_code;
@@ -362,39 +397,40 @@ async function loadWeather(){
     
     // If today not found, start from the first available date
     if(todayIndex===-1)todayIndex=0;
+    if(!days.length)throw new Error("No daily forecast data");
 
     // build forecast: today's min/max and next 3 days
     const forecast=[];
     
     // Today's forecast card - show "Today" instead of day name
-    const todayCode=codes[todayIndex]??0;
-    const todayMin=Math.round(minT[todayIndex]??0);
-    const todayMax=Math.round(maxT[todayIndex]??0);
+    const todayCode=nullableRounded(codes?.[todayIndex]);
+    const todayMin=nullableRounded(minT?.[todayIndex]);
+    const todayMax=nullableRounded(maxT?.[todayIndex]);
     forecast.push({
       label:"Today",
       code:todayCode,
       min:todayMin,
       max:todayMax,
-      rainChance:Math.round(rainChances[todayIndex]??0),
-      wind:Math.round(dailyWinds[todayIndex]??0),
-      windDirection:getWindDirectionLabel(dailyWindDirections[todayIndex]??current.wind_direction_10m)
+      rainChance:nullableRounded(rainChances?.[todayIndex]),
+      wind:nullableRounded(dailyWinds?.[todayIndex]),
+      windDirection:nullableDirection(dailyWindDirections?.[todayIndex]??current.wind_direction_10m)
     });
     
     // Next 3 days forecast (starting from todayIndex+1)
     for(let i=todayIndex+1;i<=todayIndex+3 && i<days.length;i++){
       const date=new Date(days[i]+"T12:00:00"); // Add time to avoid timezone shifts
       const label=date.toLocaleDateString("en-US",{weekday:"short",timeZone:location.timeZone});
-      const code=Number(codes[i]??0);
-      const min=Math.round(minT[i]??0);
-      const max=Math.round(maxT[i]??0);
+      const code=nullableRounded(codes?.[i]);
+      const min=nullableRounded(minT?.[i]);
+      const max=nullableRounded(maxT?.[i]);
       forecast.push({
         label,
         code,
         min,
         max,
-        rainChance:Math.round(rainChances[i]??0),
-        wind:Math.round(dailyWinds[i]??0),
-        windDirection:getWindDirectionLabel(dailyWindDirections[i]??0)
+        rainChance:nullableRounded(rainChances?.[i]),
+        wind:nullableRounded(dailyWinds?.[i]),
+        windDirection:nullableDirection(dailyWindDirections?.[i])
       });
     }
 
@@ -404,16 +440,17 @@ async function loadWeather(){
         timeZone:location.timeZone
       },
       current:{
-        code:Number(current.weather_code??0),
-        temp:Math.round(current.temperature_2m??0),
-        feelsLike:Math.round(current.apparent_temperature??0),
-        humidity:Math.round(current.relative_humidity_2m??0),
-        wind:Math.round(current.wind_speed_10m??0),
-        rainChance:Math.round(rainChances[todayIndex]??0),
-        condition:getWeatherLabel(Number(current.weather_code??0)),
-        windDirection:getWindDirectionLabel(current.wind_direction_10m??0)
+        code:nullableRounded(current.weather_code),
+        temp:nullableRounded(current.temperature_2m),
+        feelsLike:nullableRounded(current.apparent_temperature),
+        humidity:nullableRounded(current.relative_humidity_2m),
+        wind:nullableRounded(current.wind_speed_10m),
+        rainChance:nullableRounded(rainChances?.[todayIndex]),
+        condition:getWeatherLabel(current.weather_code),
+        windDirection:nullableDirection(current.wind_direction_10m)
       },
-      forecast
+      forecast,
+      fetchedAt:Date.now()
     };
 
     renderWeather(c,weatherData,units);
@@ -424,6 +461,6 @@ async function loadWeather(){
       renderWeather(c,cachedWeather,units);
       return;
     }
-    c.innerHTML="<div class='loading'>Weather unavailable</div>";
+    showWeatherUnavailable();
   }
 }

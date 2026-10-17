@@ -7,59 +7,71 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Dashboard">
-<link rel="manifest" href="manifest.json?v=20260625b">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260625b">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.json?v=20261016a">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=20261017a">
 <title>Wall Dashboard</title>
 </head>
 <body>
+<main id="todayView" class="view today-view active" aria-label="Today dashboard">
+  <header class="today-quote" aria-label="Rotating quote">
+    <div id="quotesContainer" class="quotes-container" aria-live="polite" aria-atomic="true"><div class="quote-text">Loading a quote…</div></div>
+  </header>
+  <section class="today-main" aria-label="Today’s photo and schedule">
+    <figure class="today-photo-panel">
+      <img id="todayPhoto" class="today-photo is-visible" alt="Family photo" />
+      <img id="todayPhotoNext" class="today-photo" alt="" aria-hidden="true" />
+      <figcaption class="photo-caption">A moment from our photos</figcaption>
+      <button class="photo-toggle" id="photoToggle" aria-pressed="true" aria-label="Pause automatic photo changes"><span class="material-symbols-outlined" aria-hidden="true">pause</span></button>
+    </figure>
+    <section class="agenda-panel" aria-labelledby="agendaHeading">
+      <div class="section-heading-row">
+        <h1 id="agendaHeading">Today’s schedule</h1>
+        <a class="open-calendar-link" href="https://calendar.google.com/calendar/u/0/r/day" target="_blank" rel="noopener noreferrer">Open calendar</a>
+      </div>
+      <iframe class="agenda-embed" id="agendaFrame" title="Upcoming schedule from Google Calendar" loading="eager"></iframe>
+    </section>
+  </section>
 
-<!-- Calendar -->
-<div class="slide active" id="calendarSlide">
-  <div class="container">
-    <iframe
-      class="calendar-embed"
-      id="calendarFrame"
-      style="filter: invert(1) hue-rotate(180deg); border:0;width:100%;height:90vh;border-radius:16px;"
-      title="Calendar"
-    ></iframe>
-  </div>
-</div>
+  <section class="today-forecast" aria-label="Four day forecast">
+    <div id="todayForecast" class="forecast-strip"><div class="loading">Loading forecast…</div></div>
+  </section>
 
-<!-- Weather -->
-<div class="slide" id="weatherSlide">
-  <div class="container weather-container">
-    <div id="weatherContainer"><div class="loading">Loading weather...</div></div>
-  </div>
-</div>
+  <nav class="bottom-nav" aria-label="Dashboard views">
+    <button class="nav-item active" data-view="todayView" aria-current="page"><span class="material-symbols-outlined" aria-hidden="true">home</span><span>Today</span></button>
+    <button class="nav-item" data-view="calendarSlide"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>Calendar</span></button>
+    <button class="nav-item" data-view="weatherSlide"><span class="material-symbols-outlined" aria-hidden="true">partly_cloudy_day</span><span>Weather</span></button>
+    <button class="nav-item" data-view="photosSlide"><span class="material-symbols-outlined" aria-hidden="true">photo_library</span><span>Photos</span></button>
+  </nav>
+</main>
 
-<div class="slide" id="photosSlide">
-  <div class="container photos-container">
-    <img id="photoFrame" class="photo-frame">
-  </div>
-</div>
+<section class="view detail-view" id="calendarSlide" aria-label="Calendar">
+  <header class="detail-header"><h1>Calendar</h1><p>Full week</p></header>
+  <iframe class="calendar-embed" id="calendarFrame" title="Full week Google Calendar"></iframe>
+</section>
 
-<!-- Quotes -->
-<div class="slide" id="quotesSlide">
-  <div class="container quotes-container">
-    <div class="card" id="quotesContainer"><div class="loading">Loading quote...</div></div>
-  </div>
-</div>
+<section class="view detail-view weather-view" id="weatherSlide" aria-label="Weather details">
+  <header class="detail-header"><h1>Weather</h1><p id="weatherUpdatedDetail">Current conditions and the four day forecast</p></header>
+  <div class="weather-detail-content" id="weatherContainer"><div class="loading">Loading weather…</div></div>
+</section>
 
-<!-- Navigation Controls -->
-<div class="nav-controls">
-  <button class="nav-btn" id="prevBtn" aria-label="Previous slide">‹</button>
-  <div class="nav-indicators" id="navIndicators"></div>
-  <button class="nav-btn" id="nextBtn" aria-label="Next slide">›</button>
-</div>
+<section class="view photos-view" id="photosSlide" aria-label="Photos">
+  <img id="photoFrame" class="photo-frame is-visible" alt="Family photo" />
+  <img id="photoFrameNext" class="photo-frame" alt="" aria-hidden="true" />
+</section>
 
-<div class="vignette"></div>
+<nav class="bottom-nav detail-nav" aria-label="Dashboard views" hidden>
+  <button class="nav-item" data-view="todayView"><span class="material-symbols-outlined" aria-hidden="true">home</span><span>Today</span></button>
+  <button class="nav-item" data-view="calendarSlide"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span><span>Calendar</span></button>
+  <button class="nav-item" data-view="weatherSlide"><span class="material-symbols-outlined" aria-hidden="true">partly_cloudy_day</span><span>Weather</span></button>
+  <button class="nav-item" data-view="photosSlide"><span class="material-symbols-outlined" aria-hidden="true">photo_library</span><span>Photos</span></button>
+</nav>
 
-<script src="js/config.js?v=20260625b"></script>
-<script src="js/weather.js?v=20260625b"></script>
-<script src="js/photos.js?v=20260625b"></script>
-<script src="js/quotes.js?v=20260625b"></script>
-<script src="js/adaptive-transparency.js?v=20260625b"></script>
-<script src="js/main.js?v=20260625b"></script>
+<script src="js/config.js?v=20261017a"></script>
+<script src="js/weather.js?v=20261017a"></script>
+<script src="js/photos.js?v=20261017a"></script>
+<script src="js/quotes.js?v=20261017b"></script>
+<script src="js/main.js?v=20261017a"></script>
 </body>
 </html>

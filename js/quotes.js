@@ -209,9 +209,6 @@ async function loadQuote() {
     return;
   }
 
-  // Show loading state
-  container.innerHTML = "<div class='loading'>Loading quote...</div>";
-
   // Try multiple quote APIs as fallbacks
   const quoteApis = [
     {
