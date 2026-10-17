@@ -29,6 +29,7 @@ No actionable P0, P1, or P2 findings remain at the representative 1180 × 820 la
 10. Replaced the photo pause control with a right-chevron button labeled “Show next photo,” while keeping automatic rotation enabled. Reduced the Today schedule heading to 21–28 px. The first reload still used cached JavaScript, so the CSS/JS query versions were bumped; a fresh browser load changed the displayed photo on click and rendered the heading at 28 px.
 11. Removed the generic photo caption and reclaimed its height for the image. Weather icons now use condition-coded colors: yellow for sun/partly cloudy, gray for clouds/fog, blue for rain, cyan for snow, and violet for storms.
 12. Increased the rotating quote to a regular-weight 17–22 px sans-serif style in landscape and 16 px in portrait, while retaining the existing two-line limit and restrained author label.
+13. Reduced the visible next-photo glass circle to 34 px with a translucent blurred surface; the button retains its 44 px touch target.
 
 ## Follow-up polish
 
