@@ -28,6 +28,7 @@ No actionable P0, P1, or P2 findings remain at the representative 1180 × 820 la
 9. Restored the retained quote module as a compact line above the photo/calendar layout. The quote area reserves 44 px in landscape (52 px in portrait) and the module is scheduled to refresh every 60 seconds without switching dashboard views. The quote rendered from the existing source/fallback flow in the browser; a full interval was not waited out.
 10. Replaced the photo pause control with a right-chevron button labeled “Show next photo,” while keeping automatic rotation enabled. Reduced the Today schedule heading to 21–28 px. The first reload still used cached JavaScript, so the CSS/JS query versions were bumped; a fresh browser load changed the displayed photo on click and rendered the heading at 28 px.
 11. Removed the generic photo caption and reclaimed its height for the image. Weather icons now use condition-coded colors: yellow for sun/partly cloudy, gray for clouds/fog, blue for rain, cyan for snow, and violet for storms.
+12. Increased the rotating quote to a regular-weight 17–22 px sans-serif style in landscape and 16 px in portrait, while retaining the existing two-line limit and restrained author label.
 
 ## Follow-up polish
 

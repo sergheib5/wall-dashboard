@@ -34,8 +34,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid #f5a446; outline-offs
 
 .today-quote { display: flex; align-items: center; justify-content: center; min-height: 44px; max-height: 64px; overflow: hidden; }
 .quotes-container { width: min(100%, 1320px); display: flex; align-items: baseline; justify-content: center; gap: 14px; padding: 0 12px; text-align: center; }
-.quote-text { color: var(--muted-strong); font: clamp(14px, 1.35vw, 18px)/1.35 'DM Serif Display', Georgia, serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
-.quote-author { flex: 0 0 auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.quote-text { color: var(--muted-strong); font: 400 clamp(17px, 1.6vw, 22px)/1.4 Inter, system-ui, sans-serif; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.quote-author { flex: 0 0 auto; color: var(--muted); font-size: 13px; white-space: nowrap; }
 
 .today-main { display: grid; grid-template-columns: minmax(250px, .78fr) minmax(0, 1.22fr); gap: clamp(12px, 1.6vw, 22px); min-height: 0; }
 .today-photo-panel, .agenda-panel { min-width: 0; min-height: 0; margin: 0; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
@@ -140,7 +140,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid #f5a446; outline-offs
   .today-view { overflow-y: auto; grid-template-rows: auto minmax(530px, auto) auto auto; align-content: start; padding: max(16px, var(--safe-top)) max(14px, var(--safe-right)) calc(12px + var(--safe-bottom)) max(14px, var(--safe-left)); }
   .today-quote { min-height: 52px; max-height: 76px; }
   .quotes-container { flex-direction: column; align-items: center; gap: 2px; }
-  .quote-text { font-size: 14px; }
+  .quote-text { font-size: 16px; }
   .today-main { grid-template-columns: 1fr; grid-template-rows: 230px minmax(290px, auto); }
   .today-photo-panel { grid-row: 1; }
   .agenda-panel { grid-row: 2; }
