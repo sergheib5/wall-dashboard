@@ -87,6 +87,7 @@ On Today, put the current temperature inside the Today forecast cell, then show 
 - Display Celsius explicitly; preserve the existing mph setting.
 - Show the last successful fetch time. If a refresh fails, retain the last result with “Offline or unable to refresh · updated …”.
 - Treat weather older than 30 minutes as stale and weather from a previous local date as unsuitable for an unlabeled “Today” forecast. These are proposed product thresholds, not provider guarantees.
+- Refresh weather automatically every 15 minutes while the page is visible, and check for a due refresh when the page returns to the foreground. Avoid overlapping requests and keep the last successful values visible if a refresh fails.
 - If there is no cached result, show a short unavailable message and a retry control. Missing values appear as unavailable, never as fabricated zeroes.
 
 Weather detail may scroll when necessary. Today’s essential information must remain visible without scrolling on the supported landscape sizes.

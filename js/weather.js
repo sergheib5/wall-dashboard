@@ -3,6 +3,7 @@
 const WEATHER_LOCATION_CACHE_PREFIX="wall-dashboard-weather-location:";
 const WEATHER_LOCATION_CACHE_TTL=1000*60*60*24*7; // 7 days
 const WEATHER_DATA_CACHE_PREFIX="wall-dashboard-weather-data:";
+let weatherRefreshInFlight=false;
 let resolvedWeatherLocation=null;
 let weatherLocationPromise=null;
 
@@ -363,7 +364,8 @@ function getWindDirectionLabel(degrees){
 
 async function loadWeather(){
   const c=document.getElementById("weatherContainer");
-  if(!c)return;
+  if(!c||weatherRefreshInFlight)return;
+  weatherRefreshInFlight=true;
   const config=getWeatherConfig();
   const units=getWeatherUnits(config);
   const cachedWeather=readCachedWeatherData(config);
@@ -371,7 +373,7 @@ async function loadWeather(){
   try{
     const location=await resolveWeatherLocation();
     const url=`https://api.open-meteo.com/v1/forecast?latitude=${encodeURIComponent(location.latitude)}&longitude=${encodeURIComponent(location.longitude)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=${encodeURIComponent(location.timeZone)}&temperature_unit=${encodeURIComponent(units.temperature)}&wind_speed_unit=${encodeURIComponent(units.windSpeed)}`;
-    const res=await fetch(url);
+    const res=await fetch(url,{cache:"no-store"});
     if(!res.ok){
       throw new Error(`Weather lookup failed with status ${res.status}`);
     }
@@ -471,8 +473,10 @@ async function loadWeather(){
     console.error(err);
     if(cachedWeather){
       renderWeather(c,cachedWeather,units);
-      return;
+    }else{
+      showWeatherUnavailable();
     }
-    showWeatherUnavailable();
+  }finally{
+    weatherRefreshInFlight=false;
   }
 }

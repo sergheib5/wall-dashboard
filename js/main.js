@@ -2,6 +2,15 @@ const APP_CONFIG=window.DASHBOARD_CONFIG||{};
 const CALENDAR_EMBED_URL=APP_CONFIG.calendarEmbedUrl||"";
 const PHOTO_ROTATION_MS=Math.max(30000,Number(APP_CONFIG.photoRotationMs)||240000);
 const QUOTE_ROTATION_MS=60000;
+const WEATHER_REFRESH_MS=15*60*1000;
+let lastWeatherRefreshAt=0;
+
+function refreshWeatherIfDue(force=false){
+  if(typeof loadWeather!=="function"||document.hidden)return;
+  if(!force&&Date.now()-lastWeatherRefreshAt<WEATHER_REFRESH_MS)return;
+  lastWeatherRefreshAt=Date.now();
+  loadWeather();
+}
 
 function buildCalendarEmbedUrl(mode){
   if(!CALENDAR_EMBED_URL)return "";
@@ -35,7 +44,7 @@ function showView(viewId){
     else button.removeAttribute("aria-current");
   });
   if(viewId==="photosSlide"&&typeof loadPhoto==="function")loadPhoto();
-  if(viewId==="weatherSlide"&&typeof loadWeather==="function")loadWeather();
+  if(viewId==="weatherSlide")refreshWeatherIfDue(true);
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
@@ -54,7 +63,9 @@ document.addEventListener("DOMContentLoaded",()=>{
       window.startPhotoRotation?.(PHOTO_ROTATION_MS);
     });
   }
-  if(typeof loadWeather==="function")loadWeather();
+  refreshWeatherIfDue(true);
+  window.setInterval(()=>refreshWeatherIfDue(),60*1000);
+  document.addEventListener("visibilitychange",()=>refreshWeatherIfDue());
   if(typeof loadQuote==="function"){
     loadQuote();
     window.setInterval(loadQuote,QUOTE_ROTATION_MS);
@@ -65,6 +76,4 @@ document.addEventListener("keydown",event=>{
   if(event.key==="Escape")showView("todayView");
 });
 
-window.addEventListener("pageshow",event=>{
-  if(event.persisted&&typeof loadWeather==="function")loadWeather();
-});
+window.addEventListener("pageshow",()=>refreshWeatherIfDue());
