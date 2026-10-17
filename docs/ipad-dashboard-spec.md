@@ -113,7 +113,7 @@ Keep quotes out of navigation, but show one in a compact banner above the Today 
 - Start on Today. Disable automatic full-screen rotation by default.
 - Provide labeled controls with touch areas of at least 44 × 44 CSS pixels, visible selected state, and keyboard focus.
 - Selecting a detailed view keeps it open until the user returns; no timer takes the user away.
-- Photos change automatically every four minutes while the main information remains visible. Include an explicit pause control.
+- Photos change automatically every four minutes while the main information remains visible. Include an explicit manual next-photo control.
 - Respect reduced-motion preferences. Avoid continuous animated weather icons; use brief, restrained transitions.
 - Keep hidden views out of keyboard navigation and the accessibility tree.
 - Give meaningful images and controls accessible names. Use semantic regions and headings; do not announce the clock every minute to screen readers.
@@ -154,7 +154,7 @@ Keep quotes out of navigation, but show one in a compact banner above the Today 
 
 - The first concept is preferred: keep dashboard information visible together and use labeled navigation for full-detail views.
 - Use family photo on the left and today’s schedule on the right. The user’s calendar is generally personal and expected to be relatively light.
-- Rotate the photo automatically; the current implementation cadence is four minutes and Today has a pause control.
+- Rotate the photo automatically every four minutes, with a manual next-photo control on Today.
 - Continue using the existing calendar source and keep a full-calendar view available.
 - Omit both the header date and clock: Safari's status bar already displays the current date and time, while the agenda supplies calendar date context. Use the freed vertical space for the photo, agenda, and forecast.
 - Remove the separate current-weather header block and place the current temperature centered within the Today forecast cell. Keep all four day cells equal in width.

@@ -8,8 +8,8 @@
 - State: Today screen, dark theme, weather loaded, authenticated Google Calendar agenda loaded, actual photo from the configured list, automatic rotation enabled.
 - Full-view evidence: the source concept and live Today screen were opened and visually inspected. The 1180 × 820 rendering has the requested left photo / right schedule arrangement, weather header, four-day forecast, and bottom navigation.
 - Focused evidence: the forecast strip was inspected after a first render showed label collisions; after changing each day to a two-row layout, all four days fit within 284 px columns with no horizontal overflow. The calendar iframe was checked with its dark treatment; text, day markers, and event indicators remain readable.
-- Interactions checked: Today / Weather / Photos navigation, Today/detail navigation bar visibility, photo pause state, photo advancement into the detail view, synchronization of the Today and Photos images, and crossfade between preloaded images. The list contains 10 configured photos. The four-minute interval is configured; the full four-minute wait was not performed.
-- Console: browser console error and warning entries were checked; none were reported for the working Today view.
+- Interactions checked: Today / Weather / Photos navigation, Today/detail navigation bar visibility, manual next-photo advancement, photo advancement into the detail view, synchronization of the Today and Photos images, and crossfade between preloaded images. The list contains 10 configured photos. The four-minute automatic interval remains configured; the full four-minute wait was not performed.
+- Console: the preview emitted quote-provider fetch warnings in this session, then showed its existing fallback quote. The photo navigation click worked and did not produce a script error.
 
 ## Findings
 
@@ -26,6 +26,7 @@ No actionable P0, P1, or P2 findings remain at the representative 1180 × 820 la
 7. The compact top weather chip reduces the Today header to an 81 × 34 px icon-and-temperature control at the browser's current viewport; condition details remain on the Weather view. The current portrait photo keeps its 0.75 aspect ratio in a 701 × 934 px visible image area inside the stable photo panel. Removing the separately updated blurred backdrop prevents it from showing a different photo during a crossfade. A landscape source photo and the actual iPad remain to be verified.
 8. The user preferred the current temperature centered inside the Today forecast cell instead of a separate chip. The chip was removed; Today now has a centered “Now 9°C” reading, with low/high and rain chance below, while all four day columns retain equal widths.
 9. Restored the retained quote module as a compact line above the photo/calendar layout. The quote area reserves 44 px in landscape (52 px in portrait) and the module is scheduled to refresh every 60 seconds without switching dashboard views. The quote rendered from the existing source/fallback flow in the browser; a full interval was not waited out.
+10. Replaced the photo pause control with a right-chevron button labeled “Show next photo,” while keeping automatic rotation enabled. Reduced the Today schedule heading to 21–28 px. The first reload still used cached JavaScript, so the CSS/JS query versions were bumped; a fresh browser load changed the displayed photo on click and rendered the heading at 28 px.
 
 ## Follow-up polish
 

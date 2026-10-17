@@ -26,14 +26,6 @@ async function initPhotos(){
   return await photosInitPromise;
 }
 
-function updatePhotoStatus(isPlaying){
-  const button=document.getElementById('photoToggle');
-  if(!button)return;
-  button.setAttribute('aria-pressed',String(isPlaying));
-  button.setAttribute('aria-label',isPlaying?'Pause automatic photo changes':'Resume automatic photo changes');
-  button.innerHTML=`<span class="material-symbols-outlined" aria-hidden="true">${isPlaying?'pause':'play_arrow'}</span>`;
-}
-
 async function loadPhoto(){
   if(!photosLoaded)await initPhotos();
   const request=++photoRequest;
@@ -87,13 +79,13 @@ function startPhotoRotation(intervalMs){
   if(rotationTimer)clearInterval(rotationTimer);
   const delay=Math.max(30000,Number(intervalMs)||240000);
   rotationTimer=setInterval(()=>{if(!document.hidden)loadPhoto();},delay);
-  updatePhotoStatus(true);
 }
 
 function togglePhotoRotation(shouldPlay){
   if(shouldPlay)startPhotoRotation(window.DASHBOARD_CONFIG?.photoRotationMs);
-  else if(rotationTimer){clearInterval(rotationTimer);rotationTimer=null;updatePhotoStatus(false);}
+  else if(rotationTimer){clearInterval(rotationTimer);rotationTimer=null;}
 }
 
 window.startPhotoRotation=startPhotoRotation;
 window.togglePhotoRotation=togglePhotoRotation;
+window.showNextPhoto=loadPhoto;

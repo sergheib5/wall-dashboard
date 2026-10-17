@@ -43,11 +43,13 @@ button:focus-visible, a:focus-visible { outline: 3px solid #f5a446; outline-offs
 .today-photo { position: absolute; inset: auto; display: block; width: auto; height: auto; max-width: calc(100% - 24px); max-height: calc(100% - 76px); object-fit: contain; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,.38); opacity: 0; z-index: 0; transition: opacity .65s ease; }
 .today-photo.is-visible, .photo-frame.is-visible { opacity: 1; z-index: 1; }
 .photo-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 72px 12px 18px; color: var(--text); font-size: 14px; background: rgba(13,17,23,.82); pointer-events: none; }
-.photo-toggle { position: absolute; right: 12px; bottom: 9px; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; color: var(--text); border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: rgba(13,17,23,.92); cursor: pointer; touch-action: manipulation; }
-.photo-toggle:hover { color: var(--accent); background: #1b2430; }
+.photo-next { position: absolute; right: 12px; bottom: 9px; z-index: 2; width: 44px; height: 44px; display: grid; place-items: center; color: var(--text); border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: rgba(13,17,23,.92); cursor: pointer; touch-action: manipulation; }
+.photo-next:hover { color: var(--accent); background: #1b2430; }
+.photo-next .material-symbols-outlined { font-size: 27px; }
 .agenda-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: clamp(12px, 1.45vw, 18px); }
 .section-heading-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 0 4px 10px; }
 .section-heading-row h1, .detail-header h1 { margin: 0; font: clamp(24px, 2.7vw, 34px)/1.15 'DM Serif Display', Georgia, serif; font-weight: 400; }
+.section-heading-row h1 { font-size: clamp(21px, 2.2vw, 28px); }
 .open-calendar-link { color: var(--muted-strong); font-size: 14px; text-decoration: none; padding: 8px; white-space: nowrap; }
 .open-calendar-link:hover { color: var(--accent); }
 .agenda-embed { width: 100%; height: 100%; min-height: 230px; border: 0; border-radius: 10px; background: #0d1117; filter: invert(1) hue-rotate(180deg); }

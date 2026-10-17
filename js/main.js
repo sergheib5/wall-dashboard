@@ -46,16 +46,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(agendaFrame)agendaFrame.src=buildCalendarEmbedUrl("AGENDA");
   if(calendarFrame)calendarFrame.src=buildCalendarEmbedUrl("WEEK");
 
-  const photoToggle=document.getElementById("photoToggle");
-  if(photoToggle){
-    photoToggle.addEventListener("click",()=>{
-      const wasPlaying=photoToggle.getAttribute("aria-pressed")==="true";
-      window.togglePhotoRotation?.(!wasPlaying);
-      photoToggle.setAttribute("aria-pressed",String(!wasPlaying));
-      photoToggle.setAttribute("aria-label",wasPlaying?"Resume automatic photo changes":"Pause automatic photo changes");
-      photoToggle.innerHTML=`<span class="material-symbols-outlined" aria-hidden="true">${wasPlaying?"play_arrow":"pause"}</span>`;
-    });
-  }
+  document.getElementById("photoNext")?.addEventListener("click",()=>window.showNextPhoto?.());
 
   if(typeof initPhotos==="function"){
     initPhotos().then(()=>{
