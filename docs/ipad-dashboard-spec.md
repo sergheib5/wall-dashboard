@@ -159,5 +159,6 @@ Keep quotes out of navigation, but show one in a compact banner above the Today 
 - Omit both the header date and clock: Safari's status bar already displays the current date and time, while the agenda supplies calendar date context. Use the freed vertical space for the photo, agenda, and forecast.
 - Remove the separate current-weather header block and place the current temperature centered within the Today forecast cell. Keep all four day cells equal in width.
 - Restore the rotating quote in a compact top banner; rotate every 60 seconds while keeping the dashboard view fixed.
+- Remove the generic photo caption and use the available photo-panel space for the image. Color weather icons by condition, including yellow sun icons.
 
 No answers are required to review this document. Implementation should resolve the calendar feasibility and device constraints before promising the final layout.

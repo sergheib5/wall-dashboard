@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0d1117">
 <link rel="manifest" href="manifest.json?v=20261016a">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261017b">
+<link rel="stylesheet" href="css/style.css?v=20261017c">
 <title>Wall Dashboard</title>
 </head>
 <body>
@@ -19,10 +19,9 @@
     <div id="quotesContainer" class="quotes-container" aria-live="polite" aria-atomic="true"><div class="quote-text">Loading a quote…</div></div>
   </header>
   <section class="today-main" aria-label="Today’s photo and schedule">
-    <figure class="today-photo-panel">
+    <figure class="today-photo-panel" aria-label="Family photo">
       <img id="todayPhoto" class="today-photo is-visible" alt="Family photo" />
       <img id="todayPhotoNext" class="today-photo" alt="" aria-hidden="true" />
-      <figcaption class="photo-caption">A moment from our photos</figcaption>
       <button class="photo-next" id="photoNext" type="button" aria-label="Show next photo" title="Show next photo"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
     </figure>
     <section class="agenda-panel" aria-labelledby="agendaHeading">
@@ -69,7 +68,7 @@
 </nav>
 
 <script src="js/config.js?v=20261017a"></script>
-<script src="js/weather.js?v=20261017a"></script>
+<script src="js/weather.js?v=20261017c"></script>
 <script src="js/photos.js?v=20261017b"></script>
 <script src="js/quotes.js?v=20261017b"></script>
 <script src="js/main.js?v=20261017b"></script>

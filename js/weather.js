@@ -223,8 +223,20 @@ function getWeatherIconName(code){
   return "partly_cloudy_day";
 }
 
+function getWeatherIconTone(code){
+  if(!Number.isFinite(code))return "weather-icon--unknown";
+  if(code===0)return "weather-icon--sunny";
+  if([1,2].includes(code))return "weather-icon--partly-cloudy";
+  if(code===3)return "weather-icon--cloudy";
+  if([45,48].includes(code))return "weather-icon--fog";
+  if([51,53,55,56,57,61,63,65,80,81,82].includes(code))return "weather-icon--rain";
+  if([66,67,71,73,75,77,85,86].includes(code))return "weather-icon--snow";
+  if([95,96,99].includes(code))return "weather-icon--storm";
+  return "weather-icon--unknown";
+}
+
 function weatherIcon(code, extraClass=""){
-  return `<span class="material-symbols-outlined ${extraClass}" aria-hidden="true">${getWeatherIconName(code)}</span>`;
+  return `<span class="material-symbols-outlined weather-icon ${getWeatherIconTone(code)} ${extraClass}" aria-hidden="true">${getWeatherIconName(code)}</span>`;
 }
 
 function displayNumber(value, suffix=""){
