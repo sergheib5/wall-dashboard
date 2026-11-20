@@ -4,6 +4,21 @@ const PHOTO_ROTATION_MS=Math.max(30000,Number(APP_CONFIG.photoRotationMs)||24000
 const QUOTE_ROTATION_MS=60000;
 const WEATHER_REFRESH_MS=15*60*1000;
 let lastWeatherRefreshAt=0;
+let lastClockMinute;
+let lastClockTimeZone;
+
+function refreshDashboardClock(){
+  const now=new Date();
+  const timeZone=window.dashboardTimeZone;
+  const minute=Math.floor(now.getTime()/60000);
+  if(lastClockMinute===minute&&lastClockTimeZone===timeZone)return;
+  lastClockMinute=minute;
+  lastClockTimeZone=timeZone;
+  const date=document.getElementById("dashboardDate");
+  const time=document.getElementById("dashboardTime");
+  date.textContent=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric",timeZone}).format(now);
+  time.textContent=new Intl.DateTimeFormat(undefined,{hour:"numeric",minute:"2-digit",timeZone}).format(now);
+}
 
 function refreshWeatherIfDue(force=false){
   if(typeof loadWeather!=="function"||document.hidden)return;
@@ -65,7 +80,12 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
   refreshWeatherIfDue(true);
   window.setInterval(()=>refreshWeatherIfDue(),60*1000);
-  document.addEventListener("visibilitychange",()=>refreshWeatherIfDue());
+  refreshDashboardClock();
+  window.setInterval(refreshDashboardClock,1000);
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden)refreshDashboardClock();
+    refreshWeatherIfDue();
+  });
   if(typeof loadQuote==="function"){
     loadQuote();
     window.setInterval(loadQuote,QUOTE_ROTATION_MS);

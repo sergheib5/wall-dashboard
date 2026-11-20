@@ -268,26 +268,35 @@ function getForecastRange(day, minAcross, maxAcross){
   return {left:Math.max(0,((day.min-minAcross)/span)*100),width:Math.max(2,((day.max-day.min)/span)*100)};
 }
 
-function renderTodayForecast(forecast, units, currentTemperature){
+function renderTodayForecast(weatherData, units, stale, updated){
   const target=document.getElementById("todayForecast");
   if(!target)return;
-  if(!forecast?.length){target.innerHTML="<div class='loading'>Forecast unavailable</div>";return;}
-  const allTemps=forecast.flatMap(day=>[day.min,day.max]).filter(Number.isFinite);
-  const minAcross=allTemps.length?Math.min(...allTemps):0;
-  const maxAcross=allTemps.length?Math.max(...allTemps):0;
-  target.innerHTML=forecast.slice(0,4).map((day,index)=>{
-    const range=getForecastRange(day,minAcross,maxAcross);
-    return `<article class="forecast-day${index===0?" is-today":""}">
-      <span class="forecast-day-name">${day.label}</span>
-      ${weatherIcon(day.code,"forecast-icon")}
-      ${index===0&&currentTemperature?`<div class="forecast-current" aria-label="Current temperature ${currentTemperature}"><span class="forecast-current-label">Now</span><strong class="forecast-current-temp">${currentTemperature}</strong></div>`:""}
-      <div class="forecast-temps" aria-label="Low ${displayNumber(day.min,units.temperature==="celsius"?"°C":"°F")}, high ${displayNumber(day.max,units.temperature==="celsius"?"°C":"°F")}">
-        <div class="forecast-numbers"><span>${displayNumber(day.min,units.temperature==="celsius"?"°":"°")}</span><span>${displayNumber(day.max,units.temperature==="celsius"?"°":"°")}</span></div>
-        <div class="forecast-range" aria-hidden="true"><span style="left:${range.left.toFixed(2)}%;width:${range.width.toFixed(2)}%"></span></div>
-      </div>
-      <span class="forecast-rain">Rain chance<strong>${displayNumber(day.rainChance,"%")}</strong></span>
-    </article>`;
+
+  const {current,forecast,location,fetchedAt}=weatherData;
+  const today=new Intl.DateTimeFormat("en-CA",{timeZone:location.timeZone});
+  if(!forecast.length||!Number.isFinite(fetchedAt)||today.format(new Date(fetchedAt))!==today.format(new Date())){
+    target.innerHTML="<div class='loading'>Forecast unavailable for today</div>";
+    return;
+  }
+
+  const symbol=getTemperatureSymbol(units);
+  const nextDays=forecast.slice(1,4).map((day,index)=>{
+    const label=index===0?"Tomorrow":day.label;
+    const high=displayNumber(day.max,"°");
+    const low=displayNumber(day.min,"°");
+    return `<div class="forecast-day">
+      <span class="forecast-day-name">${label}</span>
+      <span role="img" aria-label="${getWeatherLabel(day.code)}">${weatherIcon(day.code,"forecast-icon")}</span>
+      <strong class="forecast-numbers" aria-label="High ${displayNumber(day.max,symbol)}, low ${displayNumber(day.min,symbol)}">${high} / ${low}</strong>
+      <span class="forecast-rain">${displayNumber(day.rainChance,"%")} rain</span>
+    </div>`;
   }).join("");
+
+  target.innerHTML=`<div class="forecast-day">
+    <span class="forecast-day-name">Now</span>
+    <span role="img" aria-label="${getWeatherLabel(current.code)}">${weatherIcon(current.code,"forecast-icon")}</span>
+    <strong class="forecast-current-temp">${displayNumber(current.temp,symbol)}</strong>
+  </div>${nextDays}${stale?`<p class="forecast-caption">Last updated ${updated}</p>`:""}`;
 }
 
 function renderWeather(container, weatherData, units){
@@ -298,7 +307,7 @@ function renderWeather(container, weatherData, units){
   const updated=formatUpdatedAt(weatherData.fetchedAt,location.timeZone);
   window.dashboardTimeZone=location.timeZone;
 
-  renderTodayForecast(forecast,units,`${displayNumber(current.temp)}${symbol}`);
+  renderTodayForecast(weatherData,units,stale,updated);
   const forecasts=forecast.slice(0,4);
   const allTemps=forecasts.flatMap(day=>[day.min,day.max]).filter(Number.isFinite);
   const minAcross=allTemps.length?Math.min(...allTemps):0;

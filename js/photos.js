@@ -8,6 +8,41 @@ const FALLBACK_PHOTOS=['data/IMG_0258.jpg','data/IMG_1180.jpeg','data/IMG_3441.j
 
 function useFallbackPhotos(){photos=[...FALLBACK_PHOTOS];photosLoaded=true;return photos;}
 
+function updatePhotoPalette(image){
+  const dashboard=document.getElementById('todayView');
+  if(!dashboard)return;
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=32;
+  const context=canvas.getContext('2d');
+  if(!context)return;
+
+  try{
+    context.drawImage(image,0,0,32,32);
+    const pixels=context.getImageData(0,0,32,32).data;
+    const sum=[0,0,0];
+    let totalWeight=0;
+    for(let i=0;i<pixels.length;i+=4){
+      const [red,green,blue]=[pixels[i],pixels[i+1],pixels[i+2]];
+      const max=Math.max(red,green,blue);
+      const min=Math.min(red,green,blue);
+      // Favor visible color over white sky, glare, and near-black shadows.
+      const weight=(max-min)*pixels[i+3]*Math.min(1,max/80);
+      sum[0]+=red*weight;
+      sum[1]+=green*weight;
+      sum[2]+=blue*weight;
+      totalWeight+=weight;
+    }
+    const color=totalWeight?sum.map(channel=>channel/totalWeight):[130,148,167];
+    const mix=(neutral,strength)=>`rgb(${color.map(channel=>Math.round(neutral+(channel-neutral)*strength)).join(', ')})`;
+    dashboard.style.setProperty('--photo-dark',mix(15,.31));
+    dashboard.style.setProperty('--photo-light',mix(251,.30));
+    dashboard.style.setProperty('--accent',mix(245,.34));
+  }catch(error){
+    // An image can display even when its pixels cannot be sampled.
+    ['--photo-dark','--photo-light','--accent'].forEach(property=>dashboard.style.removeProperty(property));
+  }
+}
+
 async function initPhotos(){
   if(photosLoaded)return photos;
   if(photosInitPromise)return await photosInitPromise;
@@ -44,9 +79,10 @@ async function loadPhoto(){
       });
       if(request!==photoRequest)return;
       const nextSrc=photos[index];
-      for(const [current,next] of [
+      for(const [current,next,decorative] of [
         [today,document.getElementById('todayPhotoNext')],
-        [detail,document.getElementById('photoFrameNext')]
+        [detail,document.getElementById('photoFrameNext')],
+        [document.getElementById('wallpaperPhoto'),document.getElementById('wallpaperPhotoNext'),true]
       ]){
         if(!current||!next)continue;
         const active=current.classList.contains('is-visible')?current:next;
@@ -57,8 +93,13 @@ async function loadPhoto(){
           if(activated)return;
           activated=true;
           requestAnimationFrame(()=>{
+            if(request!==photoRequest||incoming.src!==image.src)return;
             incoming.classList.add('is-visible');
             active.classList.remove('is-visible');
+            if(decorative){
+              updatePhotoPalette(image);
+              return;
+            }
             incoming.alt='Family photo';
             incoming.removeAttribute('aria-hidden');
             active.alt='';
