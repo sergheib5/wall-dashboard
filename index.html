@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#0d1117">
 <link rel="manifest" href="manifest.json?v=20261016a">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20261120a">
+<link rel="stylesheet" href="css/style.css?v=20261120b">
 <title>Wall Dashboard</title>
 </head>
 <body>
@@ -24,11 +24,8 @@
     <time id="dashboardTime"></time>
   </header>
   <div class="widget-grid">
-    <section class="agenda-panel widget" aria-labelledby="agendaHeading">
-      <div class="section-heading-row">
-        <h1 id="agendaHeading"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span> Upcoming</h1>
-        <a class="open-calendar-link" href="https://calendar.google.com/calendar/u/0/r/day" target="_blank" rel="noopener noreferrer">Open calendar</a>
-      </div>
+    <section class="agenda-panel widget" aria-label="Upcoming schedule">
+      <a class="open-calendar-link" href="https://calendar.google.com/calendar/u/0/r/day" target="_blank" rel="noopener noreferrer">Open calendar</a>
       <iframe class="agenda-embed" id="agendaFrame" title="Upcoming schedule from Google Calendar" loading="eager"></iframe>
     </section>
     <figure class="today-photo-panel widget" aria-label="Family photo">
@@ -36,8 +33,7 @@
       <img id="todayPhotoNext" class="today-photo" alt="" aria-hidden="true" />
       <button class="photo-next" id="photoNext" type="button" aria-label="Show next photo" title="Show next photo"><span class="material-symbols-outlined" aria-hidden="true">chevron_right</span></button>
     </figure>
-    <section class="today-forecast widget" aria-labelledby="weatherHeading">
-      <h2 id="weatherHeading"><span class="material-symbols-outlined" aria-hidden="true">partly_cloudy_day</span> Weather</h2>
+    <section class="today-forecast widget" aria-label="Weather">
       <div id="todayForecast" class="forecast-strip"><div class="loading">Loading forecast…</div></div>
     </section>
     <section class="today-quote widget" aria-label="Rotating quote">

@@ -70,15 +70,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid #f5a446; outline-offs
 .photo-next:hover::before { border-color: rgba(255,255,255,.34); background: rgba(13,17,23,.52); }
 .photo-next .material-symbols-outlined { position: relative; font-size: 23px; }
 .agenda-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); padding: clamp(12px, 1.45vw, 18px); }
-.section-heading-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 0 8px; }
-.section-heading-row h1, .today-forecast h2, .detail-header h1 { margin: 0; font: clamp(22px, 2.7vw, 34px)/1.15 'DM Serif Display', Georgia, serif; }
-.section-heading-row h1, .today-forecast h2 { display: flex; align-items: center; gap: 9px; font-size: clamp(20px, 2.35vw, 28px); }
-.section-heading-row h1 .material-symbols-outlined, .today-forecast h2 .material-symbols-outlined { color: var(--accent); font-size: 22px; }
-.open-calendar-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); font-size: 13px; text-decoration: none; white-space: nowrap; }
+.detail-header h1 { margin: 0; font: clamp(22px, 2.7vw, 34px)/1.15 'DM Serif Display', Georgia, serif; }
+.open-calendar-link { display: inline-flex; justify-self: end; align-items: center; min-height: 44px; color: var(--accent); font-size: 13px; text-decoration: none; white-space: nowrap; }
 .open-calendar-link:hover { text-decoration: underline; }
 .agenda-embed { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 10px; background: #0d1117; filter: invert(1) hue-rotate(180deg); }
 
-.today-forecast { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: clamp(12px, 1.55vw, 20px); }
+.today-forecast { display: grid; padding: clamp(12px, 1.55vw, 20px); }
 .forecast-strip { display: grid; grid-template-columns: 1.1fr repeat(3, minmax(0, 1fr)); align-content: center; }
 .forecast-day {
   min-width: 0; display: grid; justify-items: center; align-content: start; gap: 5px;
